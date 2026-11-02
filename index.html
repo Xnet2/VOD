@@ -71,8 +71,6 @@ a{color:inherit}
   <div class="logo">VOD <b>חרדי</b></div>
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-src="" aria-selected="true">הכל</button>
-    <button class="tab" role="tab" data-src="jdn" aria-selected="false">JDN</button>
-    <button class="tab" role="tab" data-src="hm" aria-selected="false">המחדש</button>
   </nav>
 </header>
 <button class="sound" id="sound" aria-label="הפעל קול"></button>
@@ -83,7 +81,10 @@ a{color:inherit}
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
 <script>
 (() => {
-const API = (new URLSearchParams(location.search).get('api') || (window.VOD_CONFIG || {}).API_URL || '').trim();
+const params = new URLSearchParams(location.search);
+const cfg = window.VOD_CONFIG || {};
+const API = (params.get('api') || cfg.API_URL || '').trim();
+const CSV = (params.get('csv') || cfg.SHEET_CSV || '').trim(); // קישור "Publish to web" של הטבלה (CSV)
 const PAGE = 15;
 const feed = document.getElementById('feed');
 const soundBtn = document.getElementById('sound');
@@ -126,7 +127,47 @@ function ago(ts) {
 }
 function renderSound() { soundBtn.innerHTML = muted ? ICON.muted : ICON.on; soundBtn.setAttribute('aria-label', muted ? 'הפעל קול' : 'השתק'); }
 
+// ---- קריאת הטבלה ישירות מקישור CSV (Publish to web) ----
+let ALL = null; // כל השורות, ממוינות מהחדש לישן
+function parseCSV(text) {
+  const rows = []; let row = [], field = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else field += c;
+    } else if (c === '"') q = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+    else if (c !== '\r') field += c;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+async function loadAll() {
+  if (ALL) return;
+  const r = await fetch(CSV);
+  if (!r.ok) throw new Error('הטבלה לא נגישה (' + r.status + ')');
+  const rows = parseCSV(await r.text()).filter(r => r.length > 1);
+  if (!rows.length) { ALL = []; return; }
+  const head = rows.shift().map(h => h.trim());
+  const col = (name) => head.indexOf(name);
+  const ix = { vodUid: col('vodUid'), videoUrl: col('videoUrl'), source: col('source'), sourceName: col('sourceName'), avatar: col('avatar'), text: col('text'), timestamp: col('timestamp'), link: col('link'), poster: col('poster') };
+  ALL = rows.map(r => ({
+    vodUid: r[ix.vodUid] || '', videoUrl: r[ix.videoUrl] || '', source: r[ix.source] || '',
+    sourceName: r[ix.sourceName] || '', avatar: r[ix.avatar] || '', text: r[ix.text] || '',
+    timestamp: r[ix.timestamp] || '', link: r[ix.link] || '', poster: ix.poster >= 0 ? (r[ix.poster] || '') : ''
+  })).filter(v => v.videoUrl);
+  ALL.sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
+}
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
 async function fetchBatch() {
+  if (CSV) {
+    await loadAll();
+    let rows = source ? ALL.filter(v => v.source === source) : ALL;
+    return (mode === 'latest' ? rows.slice(offset, offset + PAGE) : shuffle(rows).slice(0, PAGE));
+  }
   const u = new URL(API);
   u.searchParams.set('mode', mode);
   u.searchParams.set('limit', PAGE);
@@ -143,6 +184,7 @@ async function loadMore() {
   loading = true;
   try {
     let vids = await fetchBatch();
+    if (CSV) buildTabs();
     if (mode === 'latest') {
       offset += vids.length;
       if (vids.length < PAGE) mode = 'random'; // נגמרו החדשים — ממשיכים בערבוב מהארכיון
@@ -271,8 +313,11 @@ const io = new IntersectionObserver((entries) => {
   });
 }, { root: feed, threshold: [0, .6, 1] });
 
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
-  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+const SOURCE_NAMES = { hagizra: 'הגיזרה', authenti: 'אותנטי', prog: 'פרוג', kore: 'כל רגע', blackcat: 'החתול השחור', jdn: 'JDN', hm: 'המחדש' };
+const tabsNav = document.querySelector('.tabs');
+tabsNav.addEventListener('click', (e) => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  tabsNav.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
   source = t.dataset.src;
   offset = 0; mode = 'latest'; done = false; seen = new Set();
   feed.querySelectorAll('video').forEach(detachSrc);
@@ -280,6 +325,18 @@ document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   feed.scrollTop = 0;
   loadMore();
 });
+// בונה לשוניות לפי המקורות שבאמת קיימים בטבלה (סדר לפי כמות)
+function buildTabs() {
+  if (!ALL || tabsNav.children.length > 1) return;
+  const counts = {};
+  ALL.forEach(v => { if (v.source) counts[v.source] = (counts[v.source] || 0) + 1; });
+  Object.keys(counts).sort((a, b) => counts[b] - counts[a]).forEach(src => {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.role = 'tab'; b.dataset.src = src; b.setAttribute('aria-selected', 'false');
+    b.textContent = SOURCE_NAMES[src] || src;
+    tabsNav.appendChild(b);
+  });
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -292,8 +349,8 @@ document.addEventListener('visibilitychange', () => {
 });
 
 renderSound();
-if (!API) {
-  feed.innerHTML = '<div class="state"><div><h2>האתר עדיין לא מחובר</h2>יש להזין את כתובת ה-Apps Script בקובץ config.js</div></div>';
+if (!API && !CSV) {
+  feed.innerHTML = '<div class="state"><div><h2>האתר עדיין לא מחובר</h2>יש להזין קישור CSV של הטבלה בקובץ config.js</div></div>';
 } else loadMore();
 })();
 </script>

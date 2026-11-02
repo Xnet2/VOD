@@ -1,4 +1,5 @@
-// כתובת ה-Web App של Apps Script (מסתיימת ב-/exec)
+// קישור "Publish to web" של גיליון ה-Videos בפורמט CSV — האתר קורא ממנו ישירות.
+// (File ← Share ← Publish to web ← גיליון Videos ← Comma-separated values (.csv))
 window.VOD_CONFIG = {
-  API_URL: ''
+  SHEET_CSV: ''
 };
