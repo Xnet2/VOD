@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="פיד וידאו חרדי — כל הסרטונים החמים מ-JDN ומהמחדש במקום אחד">
+<title>VOD חרדי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#fff;--muted:rgba(255,255,255,.72);--accent:#ff2d55;--glass:rgba(0,0,0,.35)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--fg);font-family:Rubik,system-ui,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+
+.top{position:fixed;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;justify-content:center;gap:4px;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:linear-gradient(#000a,#0000);pointer-events:none}
+.logo{position:absolute;inset-inline-start:16px;font-weight:700;font-size:17px;letter-spacing:.3px;pointer-events:auto}
+.logo b{color:var(--accent)}
+.tabs{display:flex;gap:2px;pointer-events:auto}
+.tab{padding:6px 10px;font-size:15px;font-weight:500;color:var(--muted);position:relative}
+.tab[aria-selected=true]{color:var(--fg)}
+.tab[aria-selected=true]::after{content:"";position:absolute;inset:auto 30% 0;height:2px;border-radius:2px;background:var(--fg)}
+
+.feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none}
+.feed::-webkit-scrollbar{display:none}
+.slide{position:relative;height:100dvh;height:100vh;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
+@supports(height:100dvh){.slide{height:100dvh}}
+.bgblur{position:absolute;inset:-40px;background:center/cover no-repeat;filter:blur(30px) brightness(.45);transform:scale(1.1)}
+.slide video{position:relative;width:100%;height:100%;object-fit:contain;max-width:620px}
+.shade{position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(#0000,#000c);pointer-events:none}
+
+.info{position:absolute;inset-inline:16px 76px;bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:2;text-shadow:0 1px 3px #0008}
+.who{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:8px}
+.who img{width:28px;height:28px;border-radius:50%;background:#fff;object-fit:contain;padding:3px}
+.who time{font-weight:400;font-size:13px;color:var(--muted)}
+.title{font-size:15px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.title.open{-webkit-line-clamp:unset}
+.more{display:inline-flex;align-items:center;gap:4px;margin-top:10px;font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;background:var(--glass);backdrop-filter:blur(8px);text-decoration:none;border:1px solid rgba(255,255,255,.2)}
+
+.side{position:absolute;inset-inline-end:10px;bottom:calc(env(safe-area-inset-bottom) + 28px);z-index:2;display:flex;flex-direction:column;gap:18px;align-items:center}
+.act{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:500;text-shadow:0 1px 3px #0008}
+.act svg{width:34px;height:34px;filter:drop-shadow(0 1px 3px #0008)}
+.act.liked svg{color:var(--accent)}
+.act.liked svg path{fill:currentColor}
+.act.pop svg{animation:pop .35s}
+@keyframes pop{50%{transform:scale(1.35)}}
+
+.paused-ico{position:absolute;z-index:3;width:76px;height:76px;opacity:0;transition:opacity .2s;pointer-events:none}
+.slide.paused .paused-ico{opacity:.8}
+.heart-burst{position:absolute;z-index:4;width:110px;height:110px;color:var(--accent);pointer-events:none;animation:burst .8s forwards}
+@keyframes burst{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.1);opacity:1}100%{transform:scale(1.4) translateY(-60px);opacity:0}}
+.bar{position:absolute;inset:auto 0 0 0;height:3px;background:rgba(255,255,255,.18);z-index:3}
+.bar i{display:block;height:100%;width:0;background:var(--fg)}
+
+.sound{position:fixed;z-index:21;top:calc(env(safe-area-inset-top) + 8px);inset-inline-end:12px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--glass);backdrop-filter:blur(8px)}
+.sound svg{width:20px;height:20px}
+.hint{position:fixed;z-index:22;left:50%;bottom:28%;transform:translateX(-50%);padding:10px 16px;border-radius:999px;background:rgba(0,0,0,.6);font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.hint.show{opacity:1}
+
+.state{height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);line-height:1.7}
+.state h2{color:var(--fg);font-size:20px;margin-bottom:6px}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (min-width:700px){.info{inset-inline-start:calc(50% - 290px)}.side{inset-inline-end:calc(50% - 360px)}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">VOD <b>חרדי</b></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-src="" aria-selected="true">הכל</button>
+    <button class="tab" role="tab" data-src="jdn" aria-selected="false">JDN</button>
+    <button class="tab" role="tab" data-src="hm" aria-selected="false">המחדש</button>
+  </nav>
+</header>
+<button class="sound" id="sound" aria-label="הפעל קול"></button>
+<main class="feed" id="feed"><div class="state"><div><div class="spinner"></div>טוען סרטונים…</div></div></main>
+<div class="hint" id="hint"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
+<script>
+(() => {
+const API = (new URLSearchParams(location.search).get('api') || (window.VOD_CONFIG || {}).API_URL || '').trim();
+const PAGE = 15;
+const feed = document.getElementById('feed');
+const soundBtn = document.getElementById('sound');
+const hintEl = document.getElementById('hint');
+
+const ICON = {
+  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3.1 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.6 0 5.8 3.7 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+  play: '<svg class="paused-ico" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>',
+  muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM22 9l-6 6M16 9l6 6"/></svg>',
+  on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
+  burst: '<svg class="heart-burst" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3.1 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.6 0 5.8 3.7 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>'
+};
+
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+let likes = new Set(store.get('vod_likes', []));
+let muted = true;
+let source = '';
+let offset = 0, mode = 'latest', loading = false, done = false;
+let seen = new Set();
+let hintTimer;
+
+function hint(t) {
+  hintEl.textContent = t; hintEl.classList.add('show');
+  clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 1600);
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function ago(ts) {
+  const t = Date.parse(ts); if (!t) return '';
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return 'עכשיו';
+  if (m < 60) return `לפני ${m} דק׳`;
+  const h = Math.round(m / 60); if (h < 24) return `לפני ${h} שע׳`;
+  const d = Math.round(h / 24); if (d < 30) return `לפני ${d} ימים`;
+  return new Date(t).toLocaleDateString('he-IL');
+}
+function renderSound() { soundBtn.innerHTML = muted ? ICON.muted : ICON.on; soundBtn.setAttribute('aria-label', muted ? 'הפעל קול' : 'השתק'); }
+
+async function fetchBatch() {
+  const u = new URL(API);
+  u.searchParams.set('mode', mode);
+  u.searchParams.set('limit', PAGE);
+  if (mode === 'latest') u.searchParams.set('offset', offset);
+  if (source) u.searchParams.set('source', source);
+  const r = await fetch(u);
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'שגיאה');
+  return j.videos || [];
+}
+
+async function loadMore() {
+  if (loading || done) return;
+  loading = true;
+  try {
+    let vids = await fetchBatch();
+    if (mode === 'latest') {
+      offset += vids.length;
+      if (vids.length < PAGE) mode = 'random'; // נגמרו החדשים — ממשיכים בערבוב מהארכיון
+    }
+    vids = vids.filter(v => v.videoUrl && !seen.has(v.videoUrl));
+    vids.forEach(v => { seen.add(v.videoUrl); feed.appendChild(slide(v)); });
+    if (!feed.querySelector('.slide')) {
+      feed.innerHTML = '<div class="state"><div><h2>אין עדיין סרטונים</h2>השאיבה האוטומטית תמלא את הפיד בקרוב.</div></div>';
+      done = true;
+    } else if (mode === 'random' && !vids.length) done = true;
+  } catch (e) {
+    if (!feed.querySelector('.slide')) feed.innerHTML = `<div class="state"><div><h2>שגיאה בטעינה</h2>${esc(e.message)}</div></div>`;
+  } finally {
+    feed.querySelector('.state:not(:only-child)')?.remove();
+    loading = false;
+  }
+}
+
+function attachSrc(video) {
+  if (video.dataset.ready) return;
+  video.dataset.ready = 1;
+  const src = video.dataset.src;
+  if (/\.m3u8(\?|$)/i.test(src) && !video.canPlayType('application/vnd.apple.mpegurl') && window.Hls && Hls.isSupported()) {
+    const hls = new Hls({ maxBufferLength: 15 });
+    hls.loadSource(src); hls.attachMedia(video); video._hls = hls;
+  } else video.src = src;
+}
+function detachSrc(video) {
+  if (!video.dataset.ready) return;
+  delete video.dataset.ready;
+  video.pause();
+  if (video._hls) { video._hls.destroy(); video._hls = null; }
+  video.removeAttribute('src'); video.load();
+}
+
+function slide(v) {
+  const el = document.createElement('section');
+  el.className = 'slide';
+  const liked = likes.has(v.videoUrl);
+  const host = v.link ? new URL(v.link, location.href).hostname.replace(/^www\./, '') : '';
+  el.innerHTML = `
+    ${v.poster ? `<div class="bgblur" style="background-image:url('${esc(v.poster)}')"></div>` : ''}
+    <video playsinline loop muted preload="none" ${v.poster ? `poster="${esc(v.poster)}"` : ''} data-src="${esc(v.videoUrl)}"></video>
+    ${ICON.play}
+    <div class="shade"></div>
+    <div class="info">
+      <div class="who">${v.avatar ? `<img src="${esc(v.avatar)}" alt="" onerror="this.remove()">` : ''}<span>${esc(v.sourceName || v.source)}</span><time>${ago(v.timestamp)}</time></div>
+      <p class="title">${esc(v.text)}</p>
+      ${v.link ? `<a class="more" href="${esc(v.link)}" target="_blank" rel="noopener">לכתבה המלאה · ${esc(host)}</a>` : ''}
+    </div>
+    <div class="side">
+      <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span>${liked ? 'אהבת' : 'אהבתי'}</span></button>
+      <button class="act share" aria-label="שתף">${ICON.share}<span>שתף</span></button>
+      ${v.link ? `<a class="act" href="${esc(v.link)}" target="_blank" rel="noopener" aria-label="מקור">${ICON.link}<span>מקור</span></a>` : ''}
+    </div>
+    <div class="bar"><i></i></div>`;
+  const video = el.querySelector('video');
+  const bar = el.querySelector('.bar i');
+  video.addEventListener('timeupdate', () => { if (video.duration) bar.style.width = (video.currentTime / video.duration * 100) + '%'; });
+  video.addEventListener('error', () => { if (el.isConnected && !video._hls) { const n = el.nextElementSibling; el.remove(); n && n.scrollIntoView(); } });
+
+  const likeBtn = el.querySelector('.like');
+  const toggleLike = (force) => {
+    const on = force ?? !likes.has(v.videoUrl);
+    on ? likes.add(v.videoUrl) : likes.delete(v.videoUrl);
+    store.set('vod_likes', [...likes]);
+    likeBtn.classList.toggle('liked', on);
+    likeBtn.querySelector('span').textContent = on ? 'אהבת' : 'אהבתי';
+    likeBtn.classList.remove('pop'); void likeBtn.offsetWidth; likeBtn.classList.add('pop');
+  };
+  likeBtn.onclick = () => toggleLike();
+  el.querySelector('.share').onclick = async () => {
+    const data = { title: v.text, text: v.text, url: v.link || v.videoUrl };
+    try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); hint('הקישור הועתק'); } } catch {}
+  };
+  el.querySelector('.title').onclick = (e) => e.currentTarget.classList.toggle('open');
+
+  // הקשה אחת = עצור/נגן, הקשה כפולה = לייק
+  let tapTimer = null;
+  el.addEventListener('click', (e) => {
+    if (e.target.closest('.side,.info,a,button')) return;
+    if (tapTimer) {
+      clearTimeout(tapTimer); tapTimer = null;
+      toggleLike(true);
+      const b = document.createElement('div'); b.innerHTML = ICON.burst;
+      const s = b.firstChild; s.style.left = (e.clientX - 55) + 'px'; s.style.top = (e.clientY - 55) + 'px'; s.style.position = 'fixed';
+      el.appendChild(s); setTimeout(() => s.remove(), 800);
+      return;
+    }
+    tapTimer = setTimeout(() => {
+      tapTimer = null;
+      if (muted) { setMuted(false); return; }
+      if (video.paused) { video.play().catch(() => {}); el.classList.remove('paused'); }
+      else { video.pause(); el.classList.add('paused'); }
+    }, 250);
+  });
+  io.observe(el);
+  return el;
+}
+
+function setMuted(m) {
+  muted = m; renderSound();
+  feed.querySelectorAll('video').forEach(v => v.muted = muted);
+  hint(muted ? 'הקול כבוי' : 'הקול פועל');
+}
+soundBtn.onclick = () => setMuted(!muted);
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(({ target: el, isIntersecting, intersectionRatio }) => {
+    const video = el.querySelector('video');
+    if (isIntersecting && intersectionRatio > .6) {
+      attachSrc(video);
+      video.muted = muted;
+      el.classList.remove('paused');
+      video.play().catch(() => { video.muted = true; muted = true; renderSound(); video.play().catch(() => {}); });
+      // טעינה מוקדמת של הבא בתור
+      const next = el.nextElementSibling?.querySelector('video');
+      if (next) { attachSrc(next); next.preload = 'auto'; }
+      const rest = [...feed.children].indexOf(el);
+      if (feed.children.length - rest < 5) loadMore();
+      // משחרר זיכרון מסרטונים רחוקים
+      [...feed.children].forEach((s, i) => { if (Math.abs(i - rest) > 3) { const vv = s.querySelector('video'); vv && detachSrc(vv); } });
+    } else {
+      video.pause();
+    }
+  });
+}, { root: feed, threshold: [0, .6, 1] });
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  source = t.dataset.src;
+  offset = 0; mode = 'latest'; done = false; seen = new Set();
+  feed.querySelectorAll('video').forEach(detachSrc);
+  feed.innerHTML = '<div class="state"><div><div class="spinner"></div>טוען סרטונים…</div></div>';
+  feed.scrollTop = 0;
+  loadMore();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    feed.scrollBy({ top: (e.key === 'ArrowDown' ? 1 : -1) * feed.clientHeight, behavior: 'smooth' });
+  } else if (e.key === 'm') setMuted(!muted);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) feed.querySelectorAll('video').forEach(v => v.pause());
+});
+
+renderSound();
+if (!API) {
+  feed.innerHTML = '<div class="state"><div><h2>האתר עדיין לא מחובר</h2>יש להזין את כתובת ה-Apps Script בקובץ config.js</div></div>';
+} else loadMore();
+})();
+</script>
+</body>
+</html>
