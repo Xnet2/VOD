@@ -12,6 +12,7 @@ window.VOD_CONFIG = {
   MEDIA_PROXY: 'https://vodos-media.i0527685490.workers.dev',
   // תמונת פרופיל קבועה לכל מקור (אם ריק — משתמשים במה שהתוסף שמר בטבלה)
   SOURCE_AVATARS: {
-    hagizra: ''
+    hagizra: '',
+    pargod: 'https://play-lh.googleusercontent.com/fSnPR2dasoQYNsodYKYZIbdS6FmaHCj2tej7yLtbD27EEJJd4K1BlEANFjg2ine8X2JdNtxnhkkACod8V62Q9g=w480-h960-rw'
   }
 };

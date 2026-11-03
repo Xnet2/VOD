@@ -2,3 +2,11 @@ name = "vodos-media"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
+
+# כל 10 דקות: מביא סרטונים חדשים של "הפרגוד" ושולח לטבלה
+[triggers]
+crons = ["*/10 * * * *"]
+
+[vars]
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9U-HuFA0yk3j0H2vUcugLbcik0P_6GTWYA6fNb-m_rjdrr8j94Gl4I9Aywqm8IQ4-Zw/exec"
+# APPS_SCRIPT_KEY נשמר כסוד (wrangler secret put), לא כאן
