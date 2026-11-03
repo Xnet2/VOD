@@ -470,7 +470,7 @@ function commentLi(c) {
   li.innerHTML = `<span class="cn">${esc(c.name)}</span>${esc(c.text)}<span class="ct">${ago(new Date(c.ts * 1000).toISOString())}</span>`;
   return li;
 }
-function setTitle(n) { sheetTitle.textContent = n === 1 ? 'תגובה אחת' : `${fmtCount(n)} תגובות`; }
+function setTitle(n) { sheetTitle.textContent = !n ? 'תגובות' : n === 1 ? 'תגובה אחת' : `${fmtCount(n)} תגובות`; }
 async function openComments(key, countEl) {
   cur = { key, countEl, n: commentCounts[key] || 0 };
   setTitle(cur.n);
