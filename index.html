@@ -15,6 +15,7 @@ html,body{height:100%;background:#eef0f3;color:var(--fg);font-family:Assistant,s
 body{display:grid;place-items:center}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 a{color:inherit}
+[hidden]{display:none!important}
 
 /* מסגרת בגודל טלפון: בטלפון היא כל המסך, במחשב היא נשארת ביחס של טלפון (9:19.5) ולא נמתחת */
 .phone{position:relative;width:100%;height:100%;overflow:hidden;background:var(--bg)}
@@ -22,35 +23,51 @@ a{color:inherit}
   .phone{height:calc(100vh - 32px);height:calc(100dvh - 32px);width:calc((100dvh - 32px) * 9 / 19.5);max-width:100vw;border-radius:26px;box-shadow:0 18px 50px rgba(22,24,35,.22)}
 }
 
-.top{position:absolute;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 10px) 48px 14px;background:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,0));pointer-events:none}
-.tabs{display:flex;gap:2px;pointer-events:auto;overflow-x:auto;scrollbar-width:none;max-width:100%}
-.tabs::-webkit-scrollbar{display:none}
-.tab{padding:6px 8px 8px;font-size:16.5px;font-weight:600;color:rgba(255,255,255,.62);position:relative;white-space:nowrap;flex:none;text-shadow:0 1px 2px rgba(0,0,0,.25);transition:color .15s}
-.tab[aria-selected=true]{color:#fff;font-weight:700}
-.tab[aria-selected=true]::after{content:"";position:absolute;left:50%;bottom:1px;width:22px;height:2.5px;margin-left:-11px;border-radius:2px;background:#fff}
+/* ראש הדף: הלוגו בפינה, ולידו כפתור קטן שפותח את תפריט המקורות */
+.top{position:absolute;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;padding:calc(env(safe-area-inset-top) + 12px) 12px 16px;background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,0));pointer-events:none}
+.brandbar{display:flex;align-items:center;gap:2px;pointer-events:auto}
+.brand{height:24px;width:auto;max-width:118px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+.srcbtn{display:flex;align-items:center;gap:1px;height:30px;padding:0 4px 0 2px;border-radius:999px;font-weight:700;font-size:14.5px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.srcbtn svg{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));transition:transform .2s}
+.srcbtn[aria-expanded=true] svg{transform:rotate(-90deg)}
+.menu{position:absolute;top:calc(env(safe-area-inset-top) + 50px);inset-inline-start:12px;z-index:25;min-width:170px;padding:6px;background:#fff;color:var(--ink);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.22);display:flex;flex-direction:column;transform-origin:top right;animation:menuIn .16s ease-out}
+@keyframes menuIn{from{opacity:0;transform:scale(.94) translateY(-4px)}}
+.tab{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 12px;border-radius:10px;font-size:15.5px;font-weight:600;text-align:start;white-space:nowrap}
+.tab:hover{background:#f3f3f5}
+.tab[aria-checked=true]{color:var(--accent)}
+.tab[aria-checked=true]::after{content:"";width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 
 .feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none}
 .feed::-webkit-scrollbar{display:none}
 .slide{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
-.wm{position:absolute;z-index:2;top:calc(env(safe-area-inset-top) + 56px);inset-inline-start:14px;height:22px;width:auto;max-width:42%;object-fit:contain;opacity:.95;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
 .bgblur{position:absolute;inset:-40px;background:center/cover no-repeat;filter:blur(30px) brightness(.55);transform:scale(1.1)}
-.slide video{position:relative;width:100%;height:100%;object-fit:cover}
+.slide video{position:relative;width:100%;height:100%;object-fit:cover;transition:filter .3s ease,transform .3s ease}
 .shade{position:absolute;inset:auto 0 0 0;height:38%;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.42));pointer-events:none}
+
+/* סוף הסרטון: טשטוש מהיר והלוגו עולה */
+.outro{position:absolute;inset:0;z-index:3;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .3s ease}
+.outro img{width:60%;max-width:260px;transform:scale(.82);transition:transform .45s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 4px 18px rgba(0,0,0,.35))}
+.slide.ending video{filter:blur(26px) brightness(.72);transform:scale(1.08)}
+.slide.ending .outro{opacity:1}
+.slide.ending .outro img{transform:none}
 
 .info{position:absolute;inset-inline:14px 68px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:2;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .who{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
 .who b{font-size:16.5px;font-weight:700}
 .who time{font-size:13.5px;color:var(--muted)}
-.title{font-size:15px;line-height:1.38;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
-.title.open{-webkit-line-clamp:unset}
+.title{font-size:15px;line-height:1.38;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.title b{font-weight:800}
+.title.open{display:block;-webkit-line-clamp:unset;max-height:42vh;overflow-y:auto;overscroll-behavior:contain}
+.more{margin-top:2px;font-size:14.5px;font-weight:800;text-shadow:inherit}
 
 /* עמודת הכפתורים — אייקונים לבנים מלאים עם מספר מתחת, כמו בטיקטוק */
-.side{position:absolute;inset-inline-end:8px;bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:2;display:flex;flex-direction:column;gap:14px;align-items:center}
+.side{position:absolute;inset-inline-end:8px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:2;display:flex;flex-direction:column;gap:13px;align-items:center}
 .avatar{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid #fff;background:#fff;overflow:hidden;display:grid;place-items:center;margin-bottom:6px}
 .avatar::before{content:attr(data-initial);color:var(--ink);font-weight:700;font-size:18px}
 .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
 .act{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:44px;font-size:12.5px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .act svg{width:30px;height:30px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+.act.snd svg{width:26px;height:26px}
 .act.liked svg{color:var(--accent)}
 .act.pop svg{animation:pop .35s}
 @keyframes pop{50%{transform:scale(1.3)}}
@@ -62,8 +79,6 @@ a{color:inherit}
 .bar{position:absolute;inset:auto 0 0 0;height:2px;background:rgba(255,255,255,.25);z-index:3;pointer-events:none}
 .bar i{display:block;height:100%;width:100%;background:#fff;transform:scaleX(0);transform-origin:right center;will-change:transform}
 
-.sound{position:absolute;z-index:21;top:calc(env(safe-area-inset-top) + 9px);inset-inline-end:10px;width:36px;height:36px;display:grid;place-items:center}
-.sound svg{width:24px;height:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .hint{position:absolute;z-index:40;left:50%;bottom:30%;transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:rgba(22,24,35,.78);backdrop-filter:blur(8px);font-size:14.5px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 .hint.show{opacity:1}
 
@@ -90,15 +105,17 @@ a{color:inherit}
 .clist .empty{color:var(--ink-2);text-align:center;padding:44px 0;font-size:14.5px}
 .cfoot{border-top:1px solid var(--line);padding:10px 12px calc(env(safe-area-inset-bottom) + 12px);background:#fff}
 .clogin{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
-.cme{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
-.cme button{color:var(--ink-2);text-decoration:underline;font-size:12.5px}
-.crow{display:flex;align-items:center;gap:8px}
-.crow .cav{width:32px;height:32px}
-.crow input{flex:1;min-width:0;border:0;border-radius:999px;background:#f1f1f2;padding:10px 14px;font:inherit;font-size:15px;color:var(--ink);outline:none}
-.crow input:focus{background:#ebebed}
-.csend{flex:none;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center}
-.csend svg{width:18px;height:18px}
-.csend:disabled{opacity:.35}
+.crow{position:relative;display:flex;align-items:center;gap:10px}
+.crow .me{width:34px;height:34px;cursor:pointer}
+.cinput{flex:1;min-width:0;display:flex;align-items:center;gap:6px;background:#f1f1f2;border-radius:999px;padding-block:4px;padding-inline:14px 4px;transition:background .15s}
+.cinput:focus-within{background:#ebebed}
+.cinput input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:15px;color:var(--ink);padding:7px 0;outline:none}
+.csend{flex:none;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.4);transition:opacity .15s,transform .18s;pointer-events:none}
+.cinput.has .csend{opacity:1;transform:none;pointer-events:auto}
+.csend svg{width:16px;height:16px}
+.mepop{position:absolute;bottom:calc(100% + 10px);inset-inline-start:0;z-index:2;min-width:190px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:10px;font-size:14px;animation:menuIn .14s ease-out}
+.mepop b{font-weight:700;font-size:15px}
+.mepop button{color:var(--accent);font-weight:700;text-align:start}
 
 .state{height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);line-height:1.7;font-size:15px}
 .state h2{color:var(--fg);font-size:20px;margin-bottom:6px}
@@ -109,11 +126,14 @@ a{color:inherit}
 <body>
 <div class="phone">
 <header class="top">
-  <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-src="" aria-selected="true">הכל</button>
-  </nav>
+  <div class="brandbar">
+    <img class="brand" id="brand" alt="VODOS">
+    <button class="srcbtn" id="srcBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת מקור"><span id="srcLabel"></span><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+  </div>
 </header>
-<button class="sound" id="sound" aria-label="הפעל קול"></button>
+<nav class="menu" id="menu" role="menu" hidden>
+  <button class="tab" role="menuitemradio" data-src="" aria-checked="true">הכל</button>
+</nav>
 <main class="feed" id="feed"><div class="state"><div><div class="spinner"></div>טוען סרטונים…</div></div></main>
 <div class="hint" id="hint"></div>
 <div class="sheet" id="sheet" aria-hidden="true">
@@ -123,13 +143,13 @@ a{color:inherit}
     <ul class="clist" id="clist"></ul>
     <div class="cfoot">
       <div class="clogin" id="clogin" hidden><span>התחברו עם Google כדי להגיב</span><div id="gbtn"></div></div>
-      <form id="cform" autocomplete="off" hidden>
-        <div class="cme"><span id="cmeName"></span>·<button type="button" id="logout">התנתקות</button></div>
-        <div class="crow">
-          <span class="cav" id="cmeAv"></span>
+      <form class="crow" id="cform" autocomplete="off" hidden>
+        <button type="button" class="cav me" id="cmeAv" aria-label="החשבון שלי" aria-haspopup="true"></button>
+        <div class="cinput" id="cinput">
           <input id="ctext" maxlength="500" placeholder="הוסיפו תגובה…" required>
-          <button type="submit" class="csend" id="csend" aria-label="שליחה"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.6 3.4 2.9 10.6c-.8.3-.7 1.5.1 1.7l6.6 1.9 1.9 6.6c.2.8 1.4.9 1.7.1l7.2-17.7c.2-.5-.3-1-.8-.8z" transform="matrix(-1 0 0 1 24 0)"/></svg></button>
+          <button type="submit" class="csend" id="csend" aria-label="שליחה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
         </div>
+        <div class="mepop" id="mepop" hidden><b id="cmeName"></b><button type="button" id="logout">התנתקות</button></div>
       </form>
     </div>
   </section>
@@ -150,8 +170,8 @@ const LOGO = cfg.LOGO_URL || 'logo.png';
 const auth = window.VodAuth;
 const server = auth.server;
 const PAGE = 15;
+const OUTRO_MS = 1600; // כמה זמן הלוגו מוצג בסוף סרטון לפני המעבר לבא
 const feed = document.getElementById('feed');
-const soundBtn = document.getElementById('sound');
 const hintEl = document.getElementById('hint');
 
 const HEART = 'M12 21.2s-7.6-4.6-9.8-9.4C.7 8.3 2.9 4.6 6.6 4.6c2.2 0 3.7 1.1 5.4 3 1.7-1.9 3.2-3 5.4-3 3.7 0 5.9 3.7 4.4 7.2-2.2 4.8-9.8 9.4-9.8 9.4z';
@@ -159,9 +179,10 @@ const ICON = {
   heart: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${HEART}"/></svg>`,
   comment: '<svg viewBox="0 0 48 48"><path fill="currentColor" d="M24 6C12.95 6 4 13.6 4 22.98c0 5.06 2.62 9.6 6.77 12.7L9.5 43l8.24-4.34c1.98.5 4.07.78 6.26.78 11.05 0 20-7.6 20-16.98S35.05 6 24 6z"/><g fill="#161823" opacity=".5"><circle cx="15.5" cy="23" r="2.6"/><circle cx="24" cy="23" r="2.6"/><circle cx="32.5" cy="23" r="2.6"/></g></svg>',
   share: '<svg viewBox="0 0 48 48" fill="currentColor"><path d="M26.5 7.5v9.2C12.6 18.3 6.2 27.7 5 40.5c4.3-7.6 10.8-11.2 21.5-11.2v9.2L43 23z"/></svg>',
+  download: '<svg viewBox="0 0 48 48" fill="currentColor"><path d="M20.5 6h7v19.6l6.6-6.6 4.95 4.95L24 39 8.95 23.95 13.9 19l6.6 6.6z"/><rect x="8" y="39.5" width="32" height="5" rx="2.5"/></svg>',
   play: '<svg class="paused-ico" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>',
-  muted: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M11 4.5 6.3 8.5H3v7h3.3l4.7 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
-  on: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M11 4.5 6.3 8.5H3v7h3.3l4.7 4z"/><path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+  muted: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4.5 6.3 8.5H3v7h3.3l4.7 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  on: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4.5 6.3 8.5H3v7h3.3l4.7 4z"/><path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
   burst: `<svg class="heart-burst" viewBox="0 0 24 24" fill="currentColor"><path d="${HEART}"/></svg>`
 };
 
@@ -170,7 +191,9 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 let likes = new Set(store.get('vod_likes', []));
-let muted = true;
+let muted = false;        // ברירת מחדל: עם קול
+let soundLocked = false;  // הדפדפן חסם ניגון עם קול עד שהמשתמש נוגע במסך
+let lastUnlock = 0;
 let source = '';
 let offset = 0, mode = 'latest', loading = false, done = false;
 let seen = new Set();
@@ -185,6 +208,9 @@ const CLIENT = (() => {
   return id;
 })();
 
+document.getElementById('brand').src = LOGO;
+document.getElementById('brand').onerror = function () { this.onerror = null; this.src = 'logo.png'; };
+
 function likeKey(v) { return v.vodUid || v.videoUrl; }
 function fmtCount(n) {
   n = Number(n) || 0;
@@ -192,6 +218,15 @@ function fmtCount(n) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
   return String(n);
 }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+// **מודגש** ו-__מודגש__ כמו בהודעות המקור; סימונים שנשארו בלי זוג נמחקים
+function md(text) {
+  return esc(text)
+    .replace(/\*\*([^*\n](?:[^*]*?[^*\s])?)\s*\*\*/g, '<b>$1</b>')
+    .replace(/__([^_\n](?:[^_]*?[^_\s])?)__/g, '<b>$1</b>')
+    .replace(/\*\*|__/g, '');
+}
+function plain(text) { return String(text || '').replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
 // מסנן תוכן שיווקי: יותר מ-2 אימוג'ים, או טקסט שחוזר על עצמו
 function isMarketing(text) {
   const t = (text || '').trim(); if (!t) return false;
@@ -221,9 +256,8 @@ async function fetchStats(vids) {
 
 function hint(t) {
   hintEl.textContent = t; hintEl.classList.add('show');
-  clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 2000);
+  clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 2200);
 }
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function ago(ts) {
   const t = Date.parse(ts); if (!t) return '';
   const m = Math.round((Date.now() - t) / 60000);
@@ -233,10 +267,13 @@ function ago(ts) {
   const d = Math.round(h / 24); if (d < 30) return d === 1 ? 'לפני יום' : `לפני ${d} ימים`;
   return new Date(t).toLocaleDateString('he-IL');
 }
-function renderSound() { soundBtn.innerHTML = muted ? ICON.muted : ICON.on; soundBtn.setAttribute('aria-label', muted ? 'הפעל קול' : 'השתק'); }
+function soundIcon() { return (muted || soundLocked) ? ICON.muted : ICON.on; }
+function renderSound() {
+  document.querySelectorAll('.snd').forEach(b => { b.innerHTML = soundIcon(); b.setAttribute('aria-label', (muted || soundLocked) ? 'הפעלת קול' : 'השתקה'); });
+}
 
 // ---- קריאת הטבלה ישירות מקישור CSV (Publish to web) ----
-let ALL = null; // כל השורות, ממוינות מהחדש לישן
+let ALL = null; // כל השורות, ממוינות מהחדש לישן, בלי כפילויות
 function parseCSV(text) {
   const rows = []; let row = [], field = '', q = false;
   for (let i = 0; i < text.length; i++) {
@@ -252,6 +289,7 @@ function parseCSV(text) {
   if (field.length || row.length) { row.push(field); rows.push(row); }
   return rows;
 }
+function fileKey(url) { try { const u = new URL(url); return u.host + u.pathname; } catch { return url; } }
 async function loadAll() {
   if (ALL) return;
   const r = await fetch(CSV);
@@ -261,12 +299,20 @@ async function loadAll() {
   const head = rows.shift().map(h => h.trim());
   const col = (name) => head.indexOf(name);
   const ix = { vodUid: col('vodUid'), videoUrl: col('videoUrl'), source: col('source'), sourceName: col('sourceName'), avatar: col('avatar'), text: col('text'), timestamp: col('timestamp'), link: col('link'), poster: col('poster') };
-  ALL = rows.map(r => ({
+  const list = rows.map(r => ({
     vodUid: r[ix.vodUid] || '', videoUrl: r[ix.videoUrl] || '', source: r[ix.source] || '',
     sourceName: r[ix.sourceName] || '', avatar: r[ix.avatar] || '', text: r[ix.text] || '',
     timestamp: r[ix.timestamp] || '', link: r[ix.link] || '', poster: ix.poster >= 0 ? (r[ix.poster] || '') : ''
   })).filter(v => v.videoUrl && !isMarketing(v.text));
-  ALL.sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
+  list.sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
+  // בלי כפילויות: אותו קובץ וידאו, או אותו טקסט בדיוק, מופיעים רק פעם אחת (נשאר החדש ביותר)
+  const files = new Set(), texts = new Set();
+  ALL = list.filter(v => {
+    const f = fileKey(v.videoUrl), t = plain(v.text);
+    if (files.has(f) || (t.length >= 15 && texts.has(t))) return false;
+    files.add(f); if (t.length >= 15) texts.add(t);
+    return true;
+  });
 }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
@@ -297,9 +343,9 @@ async function loadMore() {
       offset += vids.length;
       if (vids.length < PAGE) mode = 'random'; // נגמרו החדשים — ממשיכים בערבוב מהארכיון
     }
-    vids = vids.filter(v => v.videoUrl && !seen.has(v.videoUrl));
+    vids = vids.filter(v => v.videoUrl && !seen.has(fileKey(v.videoUrl)));
     await fetchStats(vids);
-    vids.forEach(v => { seen.add(v.videoUrl); feed.appendChild(slide(v)); });
+    vids.forEach(v => { seen.add(fileKey(v.videoUrl)); const el = slide(v); feed.appendChild(el); checkMore(el); });
     if (!feed.querySelector('.slide')) {
       feed.innerHTML = '<div class="state"><div><h2>אין עדיין סרטונים</h2>השאיבה האוטומטית תמלא את הפיד בקרוב.</div></div>';
       done = true;
@@ -328,6 +374,28 @@ function detachSrc(video) {
   if (video._hls) { video._hls.destroy(); video._hls = null; }
   video.removeAttribute('src'); video.load();
 }
+// מנסה לנגן עם קול; אם הדפדפן לא מרשה לפני מגע ראשון — מנגן בשקט עד שנוגעים במסך
+function playVideo(video) {
+  video.muted = muted || soundLocked;
+  video.play().catch(() => {
+    if (video.muted) return;
+    soundLocked = true; video.muted = true; renderSound();
+    video.play().catch(() => {});
+    hint('הקישו על המסך להפעלת הקול');
+  });
+}
+document.addEventListener('pointerdown', (e) => {
+  if (!soundLocked || e.target.closest('.snd')) return;
+  soundLocked = false; lastUnlock = Date.now();
+  if (!muted && activeVideo) activeVideo.muted = false;
+  renderSound();
+}, true);
+
+// "קרא עוד" רק כשהטקסט באמת ארוך מ-2 שורות (נבדק כשהסרטון נוסף, ושוב כשהוא עולה למסך — אחרי טעינת הגופן)
+function checkMore(el) {
+  const t = el.querySelector('.title'), b = el.querySelector('.more');
+  if (t && b && !t.classList.contains('open')) b.hidden = t.scrollHeight <= t.clientHeight + 2;
+}
 
 function slide(v) {
   const el = document.createElement('section');
@@ -337,24 +405,41 @@ function slide(v) {
   const key = likeKey(v);
   el.innerHTML = `
     ${v.poster ? `<div class="bgblur" style="background-image:url('${esc(v.poster)}')"></div>` : ''}
-    <video playsinline loop muted preload="none" ${v.poster ? `poster="${esc(v.poster)}"` : ''} data-src="${esc(v.videoUrl)}"></video>
-    <img class="wm" src="${esc(LOGO)}" alt="VODOS" onerror="this.onerror=null;this.src='logo.png'">
+    <video playsinline preload="none" ${v.poster ? `poster="${esc(v.poster)}"` : ''} data-src="${esc(v.videoUrl)}"></video>
+    <div class="outro"><img src="${esc(LOGO)}" alt="" onerror="this.onerror=null;this.src='logo.png'"></div>
     ${ICON.play}
     <div class="shade"></div>
     <div class="info">
       <div class="who"><b>@${esc(name)}</b><time>${ago(v.timestamp)}</time></div>
-      <p class="title">${esc(v.text)}</p>
+      <p class="title">${md(v.text)}</p>
+      <button class="more" type="button" hidden>קרא עוד</button>
     </div>
     <div class="side">
       <div class="avatar" data-initial="${esc(name.slice(0, 1))}">${v.avatar ? `<img src="${esc(v.avatar)}" alt="${esc(name)}" onerror="this.remove()">` : ''}</div>
       <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span class="cnt">${serverLive ? fmtCount(likeCounts[key] || 0) : (liked ? 'אהבת' : 'אהבתי')}</span></button>
       ${serverLive ? `<button class="act cmt" aria-label="תגובות">${ICON.comment}<span class="ccnt">${fmtCount(commentCounts[key] || 0)}</span></button>` : ''}
-      <button class="act share" aria-label="שתף">${ICON.share}<span>שיתוף</span></button>
+      <button class="act share" aria-label="שיתוף">${ICON.share}<span>שיתוף</span></button>
+      <button class="act dl" aria-label="הורדה">${ICON.download}<span>הורדה</span></button>
+      <button class="act snd" aria-label="השתקה">${soundIcon()}</button>
     </div>
     <div class="bar"><i></i></div>`;
   const video = el.querySelector('video');
   video._bar = el.querySelector('.bar i'); // מתעדכן בכל פריים ע"י tick() — תנועה חלקה
   video.addEventListener('error', () => { if (el.isConnected && !video._hls) { const n = el.nextElementSibling; el.remove(); n && n.scrollIntoView(); } });
+
+  // סוף הסרטון: טשטוש + לוגו, ואחרי רגע עוברים לסרטון הבא
+  const replay = () => { clearTimeout(el._endT); el.classList.remove('ending'); video.currentTime = 0; playVideo(video); };
+  video.addEventListener('ended', () => {
+    el.classList.add('ending');
+    clearTimeout(el._endT);
+    el._endT = setTimeout(() => {
+      if (activeVideo !== video) return;
+      const next = el.nextElementSibling;
+      if (next && next.classList.contains('slide')) next.scrollIntoView({ behavior: 'smooth' });
+      else replay();
+    }, OUTRO_MS);
+  });
+  el._replay = replay;
 
   const likeBtn = el.querySelector('.like');
   const cntEl = likeBtn.querySelector('.cnt');
@@ -380,15 +465,28 @@ function slide(v) {
   const cmtBtn = el.querySelector('.cmt');
   if (cmtBtn) cmtBtn.onclick = () => openComments(key, cmtBtn.querySelector('.ccnt'));
   el.querySelector('.share').onclick = async () => {
-    const data = { title: v.text, text: v.text, url: v.link || v.videoUrl };
+    const data = { title: plain(v.text), text: plain(v.text), url: v.link || v.videoUrl };
     try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); hint('הקישור הועתק'); } } catch {}
   };
-  el.querySelector('.title').onclick = (e) => e.currentTarget.classList.toggle('open');
+  // אתרי המקור לא מרשים להוריד ישירות מאתר אחר, אז הסרטון נפתח בלשונית חדשה ושומרים אותו משם
+  el.querySelector('.dl').onclick = () => {
+    if (/\.m3u8(\?|$)/i.test(v.videoUrl)) { hint('את הסרטון הזה אי אפשר להוריד'); return; }
+    const a = document.createElement('a');
+    a.href = v.videoUrl; a.target = '_blank'; a.rel = 'noopener'; a.download = '';
+    document.body.appendChild(a); a.click(); a.remove();
+    hint('הסרטון נפתח בלשונית חדשה — שמרו אותו משם');
+  };
+  el.querySelector('.snd').onclick = () => setMuted(!(muted || soundLocked));
+  const title = el.querySelector('.title'), more = el.querySelector('.more');
+  const toggleText = () => { const open = title.classList.toggle('open'); more.textContent = open ? 'הצג פחות' : 'קרא עוד'; if (!open) title.scrollTop = 0; };
+  title.onclick = () => { if (!more.hidden) toggleText(); };
+  more.onclick = toggleText;
 
   // הקשה אחת = עצור/נגן, הקשה כפולה = לייק
   let tapTimer = null;
   el.addEventListener('click', (e) => {
     if (e.target.closest('.side,.info,a,button')) return;
+    if (el.classList.contains('ending')) { replay(); return; }
     if (tapTimer) {
       clearTimeout(tapTimer); tapTimer = null;
       toggleLike(true);
@@ -399,8 +497,8 @@ function slide(v) {
     }
     tapTimer = setTimeout(() => {
       tapTimer = null;
-      if (muted) { setMuted(false); return; }
-      if (video.paused) { video.play().catch(() => {}); el.classList.remove('paused'); }
+      if (Date.now() - lastUnlock < 700) return; // המגע הזה רק הפעיל את הקול
+      if (video.paused) { playVideo(video); el.classList.remove('paused'); }
       else { video.pause(); el.classList.add('paused'); }
     }, 250);
   });
@@ -409,21 +507,23 @@ function slide(v) {
 }
 
 function setMuted(m) {
-  muted = m; renderSound();
+  muted = m; soundLocked = false; store.set('vod_muted', m);
   feed.querySelectorAll('video').forEach(v => v.muted = muted);
+  renderSound();
   hint(muted ? 'הקול כבוי' : 'הקול פועל');
 }
-soundBtn.onclick = () => setMuted(!muted);
 
 const io = new IntersectionObserver((entries) => {
   entries.forEach(({ target: el, isIntersecting, intersectionRatio }) => {
     const video = el.querySelector('video');
     if (isIntersecting && intersectionRatio > .6) {
       attachSrc(video);
-      video.muted = muted;
       activeVideo = video;
+      clearTimeout(el._endT);
+      if (el.classList.contains('ending') || video.ended) { el.classList.remove('ending'); video.currentTime = 0; }
       el.classList.remove('paused');
-      video.play().catch(() => { video.muted = true; muted = true; renderSound(); video.play().catch(() => {}); });
+      checkMore(el);
+      playVideo(video);
       // טעינה מוקדמת של הבא בתור
       const next = el.nextElementSibling?.querySelector('video');
       if (next) { attachSrc(next); next.preload = 'auto'; }
@@ -445,28 +545,37 @@ let activeVideo = null;
   requestAnimationFrame(tick);
 })();
 
+// ---- תפריט המקורות (נפתח מהכפתור הקטן שליד הלוגו) ----
 const SOURCE_NAMES = { hagizra: 'הגיזרה', authenti: 'אותנטי', prog: 'פרוג', kore: 'כל רגע', blackcat: 'החתול השחור', jdn: 'JDN', hm: 'המחדש' };
-const tabsNav = document.querySelector('.tabs');
-tabsNav.addEventListener('click', (e) => {
+const menu = document.getElementById('menu');
+const srcBtn = document.getElementById('srcBtn');
+const srcLabel = document.getElementById('srcLabel');
+function setMenu(open) { menu.hidden = !open; srcBtn.setAttribute('aria-expanded', open); }
+srcBtn.onclick = (e) => { e.stopPropagation(); setMenu(menu.hidden); };
+document.addEventListener('click', (e) => { if (!menu.hidden && !e.target.closest('#menu,#srcBtn')) setMenu(false); });
+menu.addEventListener('click', (e) => {
   const t = e.target.closest('.tab'); if (!t) return;
-  tabsNav.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  setMenu(false);
+  if (t.dataset.src === source) return;
+  menu.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-checked', x === t));
   source = t.dataset.src;
+  srcLabel.textContent = source ? (SOURCE_NAMES[source] || source) : '';
   offset = 0; mode = 'latest'; done = false; seen = new Set();
   feed.querySelectorAll('video').forEach(detachSrc);
   feed.innerHTML = '<div class="state"><div><div class="spinner"></div>טוען סרטונים…</div></div>';
   feed.scrollTop = 0;
   loadMore();
 });
-// בונה לשוניות לפי המקורות שבאמת קיימים בטבלה (סדר לפי כמות)
+// בונה את רשימת המקורות לפי מה שבאמת קיים בטבלה (סדר לפי כמות)
 function buildTabs() {
-  if (!ALL || tabsNav.children.length > 1) return;
+  if (!ALL || menu.children.length > 1) return;
   const counts = {};
   ALL.forEach(v => { if (v.source) counts[v.source] = (counts[v.source] || 0) + 1; });
   Object.keys(counts).sort((a, b) => counts[b] - counts[a]).forEach(src => {
     const b = document.createElement('button');
-    b.className = 'tab'; b.role = 'tab'; b.dataset.src = src; b.setAttribute('aria-selected', 'false');
+    b.className = 'tab'; b.setAttribute('role', 'menuitemradio'); b.dataset.src = src; b.setAttribute('aria-checked', 'false');
     b.textContent = SOURCE_NAMES[src] || src;
-    tabsNav.appendChild(b);
+    menu.appendChild(b);
   });
 }
 
@@ -475,10 +584,12 @@ const sheet = document.getElementById('sheet');
 const clist = document.getElementById('clist');
 const cform = document.getElementById('cform');
 const clogin = document.getElementById('clogin');
+const cinput = document.getElementById('cinput');
 const ctext = document.getElementById('ctext');
 const csend = document.getElementById('csend');
+const mepop = document.getElementById('mepop');
 const sheetTitle = document.getElementById('sheetTitle');
-let cur = null;       // { key, countEl, n }
+let cur = null;        // { key, countEl, n }
 let myIds = new Set(); // תגובות שהמשתמש המחובר רשאי למחוק בסרטון הפתוח
 let gbtnDrawn = false;
 
@@ -500,17 +611,20 @@ function setCount(n) {
   commentCounts[cur.key] = cur.n;
   if (cur.countEl) cur.countEl.textContent = fmtCount(cur.n);
 }
+function syncSend() { const has = !!ctext.value.trim(); cinput.classList.toggle('has', has); csend.disabled = !has; }
 function renderFoot() {
   const u = auth.user;
   clogin.hidden = !!u;
   cform.hidden = !u;
+  mepop.hidden = true;
   if (u) {
-    document.getElementById('cmeName').textContent = 'מגיבים בתור ' + u.name;
+    document.getElementById('cmeName').textContent = u.name;
     document.getElementById('cmeAv').innerHTML = avatarHtml(u.picture, u.name);
   } else if (!gbtnDrawn) {
     gbtnDrawn = true;
     auth.renderButton(document.getElementById('gbtn'), 240);
   }
+  syncSend();
 }
 async function loadMine() {
   myIds = new Set();
@@ -538,10 +652,12 @@ async function openComments(key, countEl) {
 }
 function closeComments() {
   sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true');
-  ctext.blur(); cur = null;
+  mepop.hidden = true; ctext.blur(); cur = null;
 }
 sheet.addEventListener('click', async (e) => {
   if (e.target.closest('[data-close]')) { closeComments(); return; }
+  if (e.target.closest('#cmeAv')) { mepop.hidden = !mepop.hidden; return; }
+  if (!e.target.closest('#mepop')) mepop.hidden = true;
   const del = e.target.closest('.cdel');
   if (!del || !cur) return;
   const li = del.closest('.c');
@@ -554,6 +670,7 @@ sheet.addEventListener('click', async (e) => {
     if (!clist.children.length) clist.innerHTML = '<li class="empty">עדיין אין תגובות. תהיו הראשונים!</li>';
   } catch { hint('המחיקה נכשלה — בדקו את החיבור'); }
 });
+ctext.addEventListener('input', syncSend);
 cform.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = ctext.value.trim();
@@ -571,9 +688,9 @@ cform.addEventListener('submit', async (e) => {
     ctext.value = '';
     setCount(cur.n + 1);
   } catch { hint('התגובה לא נשלחה — בדקו את החיבור'); }
-  finally { csend.disabled = false; }
+  finally { syncSend(); }
 });
-document.getElementById('logout').onclick = async () => { await auth.logout(); };
+document.getElementById('logout').onclick = async () => { mepop.hidden = true; await auth.logout(); };
 auth.onChange(async () => {
   renderFoot();
   if (!cur) return;
@@ -590,18 +707,18 @@ auth.onError(msg => hint(msg));
 auth.refresh(); // בודק שה-session השמור עדיין בתוקף
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && sheet.classList.contains('open')) { closeComments(); return; }
+  if (e.key === 'Escape') { if (!menu.hidden) { setMenu(false); return; } if (sheet.classList.contains('open')) { closeComments(); return; } }
   if (e.target.closest('input,textarea')) return; // בזמן הקלדה — לא לגלול ולא להשתיק
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
     e.preventDefault();
     feed.scrollBy({ top: (e.key === 'ArrowDown' ? 1 : -1) * feed.clientHeight, behavior: 'smooth' });
-  } else if (e.key === 'm') setMuted(!muted);
+  } else if (e.key === 'm') setMuted(!(muted || soundLocked));
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) feed.querySelectorAll('video').forEach(v => v.pause());
 });
 
-renderSound();
+muted = store.get('vod_muted', false) === true; // מי שהשתיק — נשאר מושתק גם בפעם הבאה
 if (!API && !CSV) {
   feed.innerHTML = '<div class="state"><div><h2>האתר עדיין לא מחובר</h2>יש להזין קישור CSV של הטבלה בקובץ config.js</div></div>';
 } else loadMore();
