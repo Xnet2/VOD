@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ניהול תגובות · VODOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#161823;--ink-2:#73757c;--line:#e9eaee;--bg:#f5f6f8;--card:#fff;--accent:#fe2c55}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Assistant,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:800}
+h1 small{font-weight:600;color:var(--ink-2);font-size:15px;margin-inline-start:6px}
+.me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.me img{width:28px;height:28px;border-radius:50%}
+.link{text-decoration:underline;color:var(--ink-2);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center}
+.card p{color:var(--ink-2);margin-bottom:14px}
+#gbtn{display:inline-block}
+.tools{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.tools input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;background:#fff;outline:none}
+.tools input:focus{border-color:#c9cbd1}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px}
+.btn:hover{background:#fafafb}
+.stat{color:var(--ink-2);font-size:14px;margin-bottom:10px}
+ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+li.row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
+.av{flex:none;width:36px;height:36px;border-radius:50%;background:#eceef1;display:grid;place-items:center;font-weight:700;color:var(--ink-2);overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.body{flex:1;min-width:0}
+.top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.name{font-weight:700;font-size:14.5px}
+.meta{color:var(--ink-2);font-size:12.5px}
+.text{font-size:15.5px;margin:3px 0 6px;word-wrap:break-word}
+.vid{font-size:13px;color:var(--ink-2);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;text-decoration:none}
+.vid:hover{text-decoration:underline}
+.del{flex:none;color:var(--accent);font-weight:700;font-size:14px;padding:4px 8px;border-radius:8px}
+.del:hover{background:#fff0f3}
+.del:disabled{opacity:.4}
+.empty{color:var(--ink-2);text-align:center;padding:30px 0}
+#more{display:block;margin:14px auto 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ניהול תגובות<small>VODOS</small></h1>
+    <div class="me" id="me" hidden><img id="meAv" alt=""><span id="meName"></span>·<button class="link" id="logout">התנתקות</button></div>
+  </header>
+
+  <div class="card" id="login" hidden>
+    <p>התחברו עם חשבון Google של מנהל כדי לראות ולמחוק תגובות.</p>
+    <div id="gbtn"></div>
+  </div>
+  <div class="card" id="denied" hidden><p id="deniedMsg">החשבון הזה אינו מנהל.</p></div>
+
+  <section id="panel" hidden>
+    <div class="tools">
+      <input id="filter" placeholder="סינון לפי טקסט, שם או סרטון…">
+      <button class="btn" id="reload">רענון</button>
+    </div>
+    <div class="stat" id="stat"></div>
+    <ul id="list"></ul>
+    <button class="btn" id="more" hidden>טעינת תגובות ישנות יותר</button>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(() => {
+const auth = window.VodAuth;
+const cfg = window.VOD_CONFIG || {};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let items = [], oldest = 0, total = 0, videos = null, buttonDrawn = false;
+
+// מפת סרטונים מהטבלה, כדי להציג ליד כל תגובה על איזה סרטון היא נכתבה
+async function loadVideos() {
+  if (videos || !cfg.SHEET_CSV) return;
+  videos = {};
+  try {
+    const text = await (await fetch(cfg.SHEET_CSV)).text();
+    const rows = []; let row = [], f = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true; else if (c === ',') { row.push(f); f = ''; }
+      else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; } else if (c !== '\r') f += c;
+    }
+    const head = rows.shift() || [];
+    const ix = (n) => head.indexOf(n);
+    rows.forEach(r => {
+      const v = { url: r[ix('videoUrl')], text: r[ix('text')], src: r[ix('sourceName')] };
+      if (r[ix('vodUid')]) videos[r[ix('vodUid')]] = v;
+      if (v.url) videos[v.url] = v;
+    });
+  } catch {}
+}
+
+function when(ts) { return new Date(ts * 1000).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' }); }
+function render() {
+  const f = $('filter').value.trim().toLowerCase();
+  const shown = items.filter(c => {
+    if (!f) return true;
+    const v = videos && videos[c.vid];
+    return [c.text, c.name, c.vid, v && v.text].some(s => (s || '').toLowerCase().includes(f));
+  });
+  $('stat').textContent = (total === 1 ? 'תגובה אחת' : `${total} תגובות`) + ' בסך הכול' +(f ? ` · ${shown.length} תואמות לסינון (מתוך ${items.length} שנטענו)` : '');
+  $('list').innerHTML = shown.length ? shown.map(c => {
+    const v = videos && videos[c.vid];
+    const vtext = v ? `${v.src ? v.src + ' · ' : ''}${(v.text || '').replace(/\s+/g, ' ').slice(0, 90)}` : c.vid;
+    return `<li class="row" data-cid="${c.id}">
+      <span class="av">${c.picture ? `<img src="${esc(c.picture)}" alt="" referrerpolicy="no-referrer">` : esc((c.name || '?').slice(0, 1))}</span>
+      <div class="body">
+        <div class="top"><span class="name">${esc(c.name)}</span><span class="meta">${when(c.ts)}${c.ip ? ' · ' + esc(c.ip) : ''}</span></div>
+        <p class="text">${esc(c.text)}</p>
+        ${v && v.url ? `<a class="vid" href="${esc(v.url)}" target="_blank" rel="noopener">🎬 ${esc(vtext)}</a>` : `<span class="vid">🎬 ${esc(vtext)}</span>`}
+      </div>
+      <button class="del" type="button">מחיקה</button>
+    </li>`;
+  }).join('') : '<li class="empty">אין תגובות להצגה</li>';
+  $('more').hidden = !oldest || items.length >= total;
+}
+
+let seq = 0; // מונע כפילויות כששתי טעינות רצות במקביל
+async function load(reset) {
+  if (reset) seq++;
+  const mySeq = seq;
+  const j = await auth.server('/admin/comments', { session: auth.session, before: reset ? 0 : oldest });
+  if (mySeq !== seq) return;
+  if (reset) { items = []; oldest = 0; }
+  if (!j.ok) {
+    if (j.error === 'login required') { await auth.logout(); return; }
+    showDenied(j.message || 'אין הרשאה'); return;
+  }
+  total = j.total;
+  items = items.concat(j.comments);
+  oldest = j.comments.length ? j.comments[j.comments.length - 1].id : 0;
+  render();
+}
+
+function showDenied(msg) {
+  $('panel').hidden = true; $('denied').hidden = false; $('deniedMsg').textContent = msg;
+}
+async function show() {
+  const u = auth.user;
+  $('me').hidden = !u;
+  $('login').hidden = !!u;
+  $('denied').hidden = true;
+  $('panel').hidden = true;
+  if (!u) {
+    if (!buttonDrawn) { buttonDrawn = true; auth.renderButton($('gbtn'), 260); }
+    return;
+  }
+  $('meName').textContent = u.name;
+  $('meAv').src = u.picture || ''; $('meAv').hidden = !u.picture;
+  if (!u.admin) { showDenied('החשבון הזה אינו מנהל. אפשר להוסיף מנהלים ב-ADMIN_EMAILS שבקובץ השרת.'); return; }
+  $('panel').hidden = false;
+  $('stat').textContent = 'טוען…';
+  await loadVideos();
+  await load(true);
+}
+
+$('list').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.del'); if (!btn) return;
+  const li = btn.closest('li'); const cid = Number(li.dataset.cid);
+  if (!confirm('למחוק את התגובה לצמיתות?')) return;
+  btn.disabled = true;
+  const j = await auth.server('/comments/delete', { session: auth.session, cid }).catch(() => ({ ok: false }));
+  if (!j.ok) { btn.disabled = false; alert(j.message || 'המחיקה נכשלה'); return; }
+  items = items.filter(c => c.id !== cid); total -= 1;
+  render();
+});
+$('filter').addEventListener('input', render);
+$('reload').onclick = () => load(true);
+$('more').onclick = () => load(false);
+$('logout').onclick = () => auth.logout();
+auth.onChange(show);
+auth.onError(msg => alert(msg));
+show();
+auth.refresh();
+})();
+</script>
+</body>
+</html>

@@ -7,90 +7,102 @@
 <meta name="description" content="VODOS — פיד וידאו חרדי בגלילה אנכית">
 <title>VODOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--fg:#fff;--muted:rgba(255,255,255,.72);--accent:#ff2d55;--glass:rgba(0,0,0,.35)}
+:root{--bg:#000;--fg:#fff;--muted:rgba(255,255,255,.75);--accent:#fe2c55;--ink:#161823;--ink-2:#8a8b91;--line:#efeff1}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:#111;color:var(--fg);font-family:Rubik,system-ui,sans-serif;overflow:hidden}
+html,body{height:100%;background:#eef0f3;color:var(--fg);font-family:Assistant,system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{display:grid;place-items:center}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 a{color:inherit}
 
 /* מסגרת בגודל טלפון: בטלפון היא כל המסך, במחשב היא נשארת ביחס של טלפון (9:19.5) ולא נמתחת */
 .phone{position:relative;width:100%;height:100%;overflow:hidden;background:var(--bg)}
-@media (min-aspect-ratio:3/4){.phone{height:100vh;height:100dvh;width:calc(100dvh * 9 / 19.5);max-width:100vw}}
+@media (min-aspect-ratio:3/4){
+  .phone{height:calc(100vh - 32px);height:calc(100dvh - 32px);width:calc((100dvh - 32px) * 9 / 19.5);max-width:100vw;border-radius:26px;box-shadow:0 18px 50px rgba(22,24,35,.22)}
+}
 
-.top{position:absolute;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;justify-content:center;gap:4px;padding:calc(env(safe-area-inset-top) + 10px) 52px 10px;background:linear-gradient(#000a,#0000);pointer-events:none}
-.tabs{display:flex;gap:0;pointer-events:auto;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.top{position:absolute;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 10px) 48px 14px;background:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,0));pointer-events:none}
+.tabs{display:flex;gap:2px;pointer-events:auto;overflow-x:auto;scrollbar-width:none;max-width:100%}
 .tabs::-webkit-scrollbar{display:none}
-.tab{padding:6px 8px;font-size:15px;font-weight:500;color:var(--muted);position:relative;white-space:nowrap;flex:none}
-.tab[aria-selected=true]{color:var(--fg)}
-.tab[aria-selected=true]::after{content:"";position:absolute;inset:auto 30% 0;height:2px;border-radius:2px;background:var(--fg)}
+.tab{padding:6px 8px 8px;font-size:16.5px;font-weight:600;color:rgba(255,255,255,.62);position:relative;white-space:nowrap;flex:none;text-shadow:0 1px 2px rgba(0,0,0,.25);transition:color .15s}
+.tab[aria-selected=true]{color:#fff;font-weight:700}
+.tab[aria-selected=true]::after{content:"";position:absolute;left:50%;bottom:1px;width:22px;height:2.5px;margin-left:-11px;border-radius:2px;background:#fff}
 
 .feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none}
 .feed::-webkit-scrollbar{display:none}
 .slide{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
-.wm{position:absolute;z-index:2;top:calc(env(safe-area-inset-top) + 54px);inset-inline-start:14px;height:24px;width:auto;opacity:.9;pointer-events:none;filter:drop-shadow(0 1px 2px #0009)}
-.bgblur{position:absolute;inset:-40px;background:center/cover no-repeat;filter:blur(30px) brightness(.45);transform:scale(1.1)}
+.wm{position:absolute;z-index:2;top:calc(env(safe-area-inset-top) + 56px);inset-inline-start:14px;height:22px;width:auto;max-width:42%;object-fit:contain;opacity:.95;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.bgblur{position:absolute;inset:-40px;background:center/cover no-repeat;filter:blur(30px) brightness(.55);transform:scale(1.1)}
 .slide video{position:relative;width:100%;height:100%;object-fit:cover}
-.shade{position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(#0000,#000c);pointer-events:none}
+.shade{position:absolute;inset:auto 0 0 0;height:38%;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.42));pointer-events:none}
 
-.info{position:absolute;inset-inline:16px 76px;bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:2;text-shadow:0 1px 3px #0008}
-.who{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:6px}
-.who time{font-weight:400;font-size:13px;color:var(--muted)}
-.title{font-size:15px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.info{position:absolute;inset-inline:14px 68px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:2;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.who{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.who b{font-size:16.5px;font-weight:700}
+.who time{font-size:13.5px;color:var(--muted)}
+.title{font-size:15px;line-height:1.38;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .title.open{-webkit-line-clamp:unset}
-.more{display:inline-flex;align-items:center;gap:4px;margin-top:10px;font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;background:var(--glass);backdrop-filter:blur(8px);text-decoration:none;border:1px solid rgba(255,255,255,.2)}
 
-.side{position:absolute;inset-inline-end:10px;bottom:calc(env(safe-area-inset-bottom) + 28px);z-index:2;display:flex;flex-direction:column;gap:18px;align-items:center}
-/* תמונת הפרופיל בראש עמודת הכפתורים — כמו בטיקטוק */
-.avatar{position:relative;width:48px;height:48px;border-radius:50%;border:1.5px solid #fff;background:#fff;overflow:hidden;display:grid;place-items:center;margin-bottom:4px;box-shadow:0 1px 4px #0008}
-.avatar::before{content:attr(data-initial);color:#111;font-weight:700;font-size:20px}
+/* עמודת הכפתורים — אייקונים לבנים מלאים עם מספר מתחת, כמו בטיקטוק */
+.side{position:absolute;inset-inline-end:8px;bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:2;display:flex;flex-direction:column;gap:14px;align-items:center}
+.avatar{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid #fff;background:#fff;overflow:hidden;display:grid;place-items:center;margin-bottom:6px}
+.avatar::before{content:attr(data-initial);color:var(--ink);font-weight:700;font-size:18px}
 .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
-.act{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:500;text-shadow:0 1px 3px #0008}
-.act svg{width:34px;height:34px;filter:drop-shadow(0 1px 3px #0008)}
+.act{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:44px;font-size:12.5px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.act svg{width:30px;height:30px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .act.liked svg{color:var(--accent)}
-.act.liked svg path{fill:currentColor}
 .act.pop svg{animation:pop .35s}
-@keyframes pop{50%{transform:scale(1.35)}}
+@keyframes pop{50%{transform:scale(1.3)}}
 
-.paused-ico{position:absolute;z-index:3;width:76px;height:76px;opacity:0;transition:opacity .2s;pointer-events:none}
-.slide.paused .paused-ico{opacity:.8}
-.heart-burst{position:absolute;z-index:4;width:110px;height:110px;color:var(--accent);pointer-events:none;animation:burst .8s forwards}
+.paused-ico{position:absolute;z-index:3;width:64px;height:64px;opacity:0;transition:opacity .2s;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.slide.paused .paused-ico{opacity:.7}
+.heart-burst{position:absolute;z-index:4;width:100px;height:100px;color:var(--accent);pointer-events:none;animation:burst .8s forwards}
 @keyframes burst{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.1);opacity:1}100%{transform:scale(1.4) translateY(-60px);opacity:0}}
-.bar{position:absolute;inset:auto 0 0 0;height:2px;background:rgba(255,255,255,.22);z-index:3;pointer-events:none}
-.bar i{display:block;height:100%;width:100%;background:var(--fg);transform:scaleX(0);transform-origin:right center;will-change:transform}
+.bar{position:absolute;inset:auto 0 0 0;height:2px;background:rgba(255,255,255,.25);z-index:3;pointer-events:none}
+.bar i{display:block;height:100%;width:100%;background:#fff;transform:scaleX(0);transform-origin:right center;will-change:transform}
 
-.sound{position:absolute;z-index:21;top:calc(env(safe-area-inset-top) + 8px);inset-inline-end:12px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--glass);backdrop-filter:blur(8px)}
-.sound svg{width:20px;height:20px}
-.hint{position:absolute;z-index:22;left:50%;bottom:28%;transform:translateX(-50%);padding:10px 16px;border-radius:999px;background:rgba(0,0,0,.6);font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.sound{position:absolute;z-index:21;top:calc(env(safe-area-inset-top) + 9px);inset-inline-end:10px;width:36px;height:36px;display:grid;place-items:center}
+.sound svg{width:24px;height:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.hint{position:absolute;z-index:40;left:50%;bottom:30%;transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:rgba(22,24,35,.78);backdrop-filter:blur(8px);font-size:14.5px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 .hint.show{opacity:1}
 
 /* חלונית התגובות — נפתחת מלמטה כמו בטיקטוק */
 .sheet{position:absolute;inset:0;z-index:30;visibility:hidden;pointer-events:none}
 .sheet.open{visibility:visible;pointer-events:auto}
-.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .25s}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.25);opacity:0;transition:opacity .25s}
 .sheet.open .sheet-bg{opacity:1}
-.sheet-box{position:absolute;inset:auto 0 0 0;height:64%;display:flex;flex-direction:column;background:#fff;color:#161823;border-radius:14px 14px 0 0;transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.sheet-box{position:absolute;inset:auto 0 0 0;height:66%;display:flex;flex-direction:column;background:#fff;color:var(--ink);border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .sheet.open .sheet-box{transform:none}
-.sheet-head{position:relative;padding:14px 16px 10px;text-align:center;font-size:14px}
-.sheet-x{position:absolute;inset-inline-end:10px;top:8px;width:32px;height:32px;font-size:16px;color:#161823}
-.clist{flex:1;overflow-y:auto;list-style:none;padding:4px 16px 8px;overscroll-behavior:contain}
-.clist li{padding:9px 0;line-height:1.45;font-size:15px;word-wrap:break-word}
-.clist .cn{display:block;font-size:13px;font-weight:500;color:#8a8b91}
-.clist .ct{display:block;font-size:12px;color:#a6a7ab;margin-top:2px}
-.clist .empty{color:#8a8b91;text-align:center;padding:40px 0;font-size:14px}
-.cform{border-top:1px solid #ececec;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);background:#fff}
-.cname-row{display:flex;align-items:center;gap:6px;font-size:12px;color:#8a8b91;margin-bottom:6px}
-.cname-row input{border:0;border-bottom:1px solid #ddd;font:inherit;font-size:13px;color:#161823;width:9em;padding:2px 0;outline:none;background:none}
-.crow{display:flex;gap:8px}
-.crow input{flex:1;min-width:0;border:0;border-radius:999px;background:#f1f1f2;padding:10px 14px;font:inherit;font-size:15px;color:#161823;outline:none}
-.crow button{color:var(--accent);font-weight:700;padding:0 6px}
-.crow button:disabled{opacity:.4}
+.sheet-head{position:relative;padding:14px 16px 10px;text-align:center;font-size:14px;font-weight:700}
+.sheet-x{position:absolute;inset-inline-end:8px;top:6px;width:36px;height:36px;display:grid;place-items:center;color:var(--ink)}
+.sheet-x svg{width:20px;height:20px}
+.clist{flex:1;overflow-y:auto;list-style:none;padding:2px 16px 8px;overscroll-behavior:contain}
+.c{display:flex;gap:10px;padding:10px 0}
+.cav{flex:none;width:34px;height:34px;border-radius:50%;background:#eceef1;color:var(--ink-2);font-weight:700;font-size:14px;display:grid;place-items:center;overflow:hidden}
+.cav img{width:100%;height:100%;object-fit:cover}
+.cbody{min-width:0;flex:1}
+.cn{display:block;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.ctx{font-size:15px;line-height:1.4;word-wrap:break-word;margin:1px 0 3px}
+.cmeta{font-size:12.5px;color:#a6a7ab;display:flex;gap:12px}
+.cdel{color:#a6a7ab;font-weight:600;font-size:12.5px}
+.cdel:hover{color:var(--accent)}
+.clist .empty{color:var(--ink-2);text-align:center;padding:44px 0;font-size:14.5px}
+.cfoot{border-top:1px solid var(--line);padding:10px 12px calc(env(safe-area-inset-bottom) + 12px);background:#fff}
+.clogin{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.cme{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
+.cme button{color:var(--ink-2);text-decoration:underline;font-size:12.5px}
+.crow{display:flex;align-items:center;gap:8px}
+.crow .cav{width:32px;height:32px}
+.crow input{flex:1;min-width:0;border:0;border-radius:999px;background:#f1f1f2;padding:10px 14px;font:inherit;font-size:15px;color:var(--ink);outline:none}
+.crow input:focus{background:#ebebed}
+.csend{flex:none;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center}
+.csend svg{width:18px;height:18px}
+.csend:disabled{opacity:.35}
 
-.state{height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);line-height:1.7}
+.state{height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);line-height:1.7;font-size:15px}
 .state h2{color:var(--fg);font-size:20px;margin-bottom:6px}
-.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+.spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -107,17 +119,26 @@ a{color:inherit}
 <div class="sheet" id="sheet" aria-hidden="true">
   <div class="sheet-bg" data-close></div>
   <section class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <header class="sheet-head"><b id="sheetTitle">תגובות</b><button class="sheet-x" data-close aria-label="סגור">✕</button></header>
+    <header class="sheet-head"><span id="sheetTitle">תגובות</span><button class="sheet-x" data-close aria-label="סגור"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <ul class="clist" id="clist"></ul>
-    <form class="cform" id="cform" autocomplete="off">
-      <label class="cname-row">מגיב/ה בשם <input id="cname" maxlength="30" placeholder="אורח"></label>
-      <div class="crow"><input id="ctext" maxlength="500" placeholder="הוסף תגובה…" required><button type="submit" id="csend">שלח</button></div>
-    </form>
+    <div class="cfoot">
+      <div class="clogin" id="clogin" hidden><span>התחברו עם Google כדי להגיב</span><div id="gbtn"></div></div>
+      <form id="cform" autocomplete="off" hidden>
+        <div class="cme"><span id="cmeName"></span>·<button type="button" id="logout">התנתקות</button></div>
+        <div class="crow">
+          <span class="cav" id="cmeAv"></span>
+          <input id="ctext" maxlength="500" placeholder="הוסיפו תגובה…" required>
+          <button type="submit" class="csend" id="csend" aria-label="שליחה"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.6 3.4 2.9 10.6c-.8.3-.7 1.5.1 1.7l6.6 1.9 1.9 6.6c.2.8 1.4.9 1.7.1l7.2-17.7c.2-.5-.3-1-.8-.8z" transform="matrix(-1 0 0 1 24 0)"/></svg></button>
+        </div>
+      </form>
+    </div>
   </section>
 </div>
 </div>
 
 <script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
 <script>
 (() => {
@@ -125,21 +146,23 @@ const params = new URLSearchParams(location.search);
 const cfg = window.VOD_CONFIG || {};
 const API = (params.get('api') || cfg.API_URL || '').trim();
 const CSV = (params.get('csv') || cfg.SHEET_CSV || '').trim(); // קישור "Publish to web" של הטבלה (CSV)
-const SERVER = (params.get('server') || cfg.SERVER || '').trim().replace(/\/+$/, ''); // שרת הלייקים והתגובות (PythonAnywhere)
+const LOGO = cfg.LOGO_URL || 'logo.png';
+const auth = window.VodAuth;
+const server = auth.server;
 const PAGE = 15;
 const feed = document.getElementById('feed');
 const soundBtn = document.getElementById('sound');
 const hintEl = document.getElementById('hint');
 
+const HEART = 'M12 21.2s-7.6-4.6-9.8-9.4C.7 8.3 2.9 4.6 6.6 4.6c2.2 0 3.7 1.1 5.4 3 1.7-1.9 3.2-3 5.4-3 3.7 0 5.9 3.7 4.4 7.2-2.2 4.8-9.8 9.4-9.8 9.4z';
 const ICON = {
-  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3.1 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.6 0 5.8 3.7 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>',
-  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>',
-  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+  heart: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${HEART}"/></svg>`,
+  comment: '<svg viewBox="0 0 48 48"><path fill="currentColor" d="M24 6C12.95 6 4 13.6 4 22.98c0 5.06 2.62 9.6 6.77 12.7L9.5 43l8.24-4.34c1.98.5 4.07.78 6.26.78 11.05 0 20-7.6 20-16.98S35.05 6 24 6z"/><g fill="#161823" opacity=".5"><circle cx="15.5" cy="23" r="2.6"/><circle cx="24" cy="23" r="2.6"/><circle cx="32.5" cy="23" r="2.6"/></g></svg>',
+  share: '<svg viewBox="0 0 48 48" fill="currentColor"><path d="M26.5 7.5v9.2C12.6 18.3 6.2 27.7 5 40.5c4.3-7.6 10.8-11.2 21.5-11.2v9.2L43 23z"/></svg>',
   play: '<svg class="paused-ico" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>',
-  muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM22 9l-6 6M16 9l6 6"/></svg>',
-  on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
-  comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5c-5.2 0-9.5 3.6-9.5 8.1 0 2.4 1.2 4.6 3.2 6.1l-.7 3.3 3.8-1.9c1 .3 2.1.5 3.2.5 5.2 0 9.5-3.6 9.5-8S17.2 3.5 12 3.5z"/></svg>',
-  burst: '<svg class="heart-burst" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3.1 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.6 0 5.8 3.7 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>'
+  muted: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M11 4.5 6.3 8.5H3v7h3.3l4.7 4z"/><path d="M16 9.5l5 5M21 9.5l-5 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+  on: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M11 4.5 6.3 8.5H3v7h3.3l4.7 4z"/><path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+  burst: `<svg class="heart-burst" viewBox="0 0 24 24" fill="currentColor"><path d="${HEART}"/></svg>`
 };
 
 const store = {
@@ -152,21 +175,15 @@ let source = '';
 let offset = 0, mode = 'latest', loading = false, done = false;
 let seen = new Set();
 let hintTimer;
-let serverLive = !!SERVER;    // מכובה אוטומטית אם השרת לא זמין — ואז הלייקים מקומיים בלבד
-const likeCounts = {};        // מטמון ספירות לפי מזהה סרטון
+let serverLive = !!auth.SERVER; // מכובה אוטומטית אם השרת לא זמין — ואז הלייקים מקומיים בלבד
+const likeCounts = {};          // מטמון ספירות לפי מזהה סרטון
 const commentCounts = {};
-// מזהה אנונימי קבוע לכל דפדפן — כך כל משתמש נספר פעם אחת ורואה את הלייקים שלו
+// מזהה אנונימי קבוע לכל דפדפן — כך כל משתמש נספר פעם אחת בלייקים (בלי צורך בהתחברות)
 const CLIENT = (() => {
   let id = store.get('vod_client', '');
   if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36); store.set('vod_client', id); }
   return id;
 })();
-async function server(path, body) {
-  // text/plain כדי שהדפדפן לא ישלח בקשת preflight לפני כל POST
-  const opt = body ? { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(body) } : {};
-  const r = await fetch(SERVER + path, opt);
-  return r.json().catch(() => ({ ok: false }));
-}
 
 function likeKey(v) { return v.vodUid || v.videoUrl; }
 function fmtCount(n) {
@@ -204,7 +221,7 @@ async function fetchStats(vids) {
 
 function hint(t) {
   hintEl.textContent = t; hintEl.classList.add('show');
-  clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 1600);
+  clearTimeout(hintTimer); hintTimer = setTimeout(() => hintEl.classList.remove('show'), 2000);
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function ago(ts) {
@@ -316,23 +333,23 @@ function slide(v) {
   const el = document.createElement('section');
   el.className = 'slide';
   const liked = likes.has(v.videoUrl);
-  const host = v.link ? new URL(v.link, location.href).hostname.replace(/^www\./, '') : '';
   const name = v.sourceName || v.source || '';
+  const key = likeKey(v);
   el.innerHTML = `
     ${v.poster ? `<div class="bgblur" style="background-image:url('${esc(v.poster)}')"></div>` : ''}
     <video playsinline loop muted preload="none" ${v.poster ? `poster="${esc(v.poster)}"` : ''} data-src="${esc(v.videoUrl)}"></video>
-    <img class="wm" src="logo.png" alt="VODOS">
+    <img class="wm" src="${esc(LOGO)}" alt="VODOS" onerror="this.onerror=null;this.src='logo.png'">
     ${ICON.play}
     <div class="shade"></div>
     <div class="info">
-      <div class="who"><span>@${esc(name)}</span><time>${ago(v.timestamp)}</time></div>
+      <div class="who"><b>@${esc(name)}</b><time>${ago(v.timestamp)}</time></div>
       <p class="title">${esc(v.text)}</p>
     </div>
     <div class="side">
       <div class="avatar" data-initial="${esc(name.slice(0, 1))}">${v.avatar ? `<img src="${esc(v.avatar)}" alt="${esc(name)}" onerror="this.remove()">` : ''}</div>
-      <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span class="cnt">${serverLive ? fmtCount(likeCounts[likeKey(v)] || 0) : (liked ? 'אהבת' : 'אהבתי')}</span></button>
-      ${serverLive ? `<button class="act cmt" aria-label="תגובות">${ICON.comment}<span class="ccnt">${fmtCount(commentCounts[likeKey(v)] || 0)}</span></button>` : ''}
-      <button class="act share" aria-label="שתף">${ICON.share}<span>שתף</span></button>
+      <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span class="cnt">${serverLive ? fmtCount(likeCounts[key] || 0) : (liked ? 'אהבת' : 'אהבתי')}</span></button>
+      ${serverLive ? `<button class="act cmt" aria-label="תגובות">${ICON.comment}<span class="ccnt">${fmtCount(commentCounts[key] || 0)}</span></button>` : ''}
+      <button class="act share" aria-label="שתף">${ICON.share}<span>שיתוף</span></button>
     </div>
     <div class="bar"><i></i></div>`;
   const video = el.querySelector('video');
@@ -341,7 +358,6 @@ function slide(v) {
 
   const likeBtn = el.querySelector('.like');
   const cntEl = likeBtn.querySelector('.cnt');
-  const key = likeKey(v);
   const toggleLike = (force) => {
     const was = likes.has(v.videoUrl);
     const on = force ?? !was;
@@ -377,7 +393,7 @@ function slide(v) {
       clearTimeout(tapTimer); tapTimer = null;
       toggleLike(true);
       const b = document.createElement('div'); b.innerHTML = ICON.burst;
-      const s = b.firstChild; s.style.left = (e.clientX - 55) + 'px'; s.style.top = (e.clientY - 55) + 'px'; s.style.position = 'fixed';
+      const s = b.firstChild; s.style.left = (e.clientX - 50) + 'px'; s.style.top = (e.clientY - 50) + 'px'; s.style.position = 'fixed';
       el.appendChild(s); setTimeout(() => s.remove(), 800);
       return;
     }
@@ -454,63 +470,124 @@ function buildTabs() {
   });
 }
 
-// ---- תגובות ----
+// ---- תגובות (דורשות התחברות עם Google) ----
 const sheet = document.getElementById('sheet');
 const clist = document.getElementById('clist');
 const cform = document.getElementById('cform');
-const cname = document.getElementById('cname');
+const clogin = document.getElementById('clogin');
 const ctext = document.getElementById('ctext');
 const csend = document.getElementById('csend');
 const sheetTitle = document.getElementById('sheetTitle');
-let cur = null; // { key, countEl, n }
-cname.value = store.get('vod_name', '');
+let cur = null;       // { key, countEl, n }
+let myIds = new Set(); // תגובות שהמשתמש המחובר רשאי למחוק בסרטון הפתוח
+let gbtnDrawn = false;
 
+function avatarHtml(picture, name) {
+  return picture ? `<img src="${esc(picture)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${esc((name || '?').slice(0, 1))}'))">` : esc((name || '?').slice(0, 1));
+}
 function commentLi(c) {
   const li = document.createElement('li');
-  li.innerHTML = `<span class="cn">${esc(c.name)}</span>${esc(c.text)}<span class="ct">${ago(new Date(c.ts * 1000).toISOString())}</span>`;
+  li.className = 'c'; li.dataset.cid = c.id;
+  const canDelete = c.mine || myIds.has(c.id);
+  li.innerHTML = `<span class="cav">${avatarHtml(c.picture, c.name)}</span>
+    <div class="cbody"><span class="cn">${esc(c.name)}</span><p class="ctx">${esc(c.text)}</p>
+    <span class="cmeta"><span>${ago(new Date(c.ts * 1000).toISOString())}</span>${canDelete ? '<button class="cdel" type="button">מחיקה</button>' : ''}</span></div>`;
   return li;
 }
 function setTitle(n) { sheetTitle.textContent = !n ? 'תגובות' : n === 1 ? 'תגובה אחת' : `${fmtCount(n)} תגובות`; }
+function setCount(n) {
+  cur.n = Math.max(0, n); setTitle(cur.n);
+  commentCounts[cur.key] = cur.n;
+  if (cur.countEl) cur.countEl.textContent = fmtCount(cur.n);
+}
+function renderFoot() {
+  const u = auth.user;
+  clogin.hidden = !!u;
+  cform.hidden = !u;
+  if (u) {
+    document.getElementById('cmeName').textContent = 'מגיבים בתור ' + u.name;
+    document.getElementById('cmeAv').innerHTML = avatarHtml(u.picture, u.name);
+  } else if (!gbtnDrawn) {
+    gbtnDrawn = true;
+    auth.renderButton(document.getElementById('gbtn'), 240);
+  }
+}
+async function loadMine() {
+  myIds = new Set();
+  if (!cur || !auth.session) return;
+  try {
+    const j = await server('/comments/mine', { session: auth.session, id: cur.key });
+    if (j.ok) myIds = new Set(j.ids);
+  } catch {}
+}
 async function openComments(key, countEl) {
   cur = { key, countEl, n: commentCounts[key] || 0 };
   setTitle(cur.n);
+  renderFoot();
   clist.innerHTML = '<li class="empty">טוען…</li>';
   sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
   try {
-    const j = await server('/comments?id=' + encodeURIComponent(key));
+    const [j] = await Promise.all([server('/comments?id=' + encodeURIComponent(key)), loadMine()]);
     if (!cur || cur.key !== key) return;
     clist.innerHTML = '';
     if (!j.ok) { clist.innerHTML = '<li class="empty">לא הצלחנו לטעון תגובות</li>'; return; }
     if (!j.comments.length) clist.innerHTML = '<li class="empty">עדיין אין תגובות. תהיו הראשונים!</li>';
     j.comments.forEach(c => clist.appendChild(commentLi(c)));
-    cur.n = j.comments.length; setTitle(cur.n);
+    setCount(j.comments.length);
   } catch { clist.innerHTML = '<li class="empty">לא הצלחנו לטעון תגובות</li>'; }
 }
 function closeComments() {
   sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true');
   ctext.blur(); cur = null;
 }
-sheet.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeComments(); });
+sheet.addEventListener('click', async (e) => {
+  if (e.target.closest('[data-close]')) { closeComments(); return; }
+  const del = e.target.closest('.cdel');
+  if (!del || !cur) return;
+  const li = del.closest('.c');
+  if (!confirm('למחוק את התגובה?')) return;
+  try {
+    const j = await server('/comments/delete', { session: auth.session, cid: Number(li.dataset.cid) });
+    if (!j.ok) { hint(j.message || 'המחיקה נכשלה'); return; }
+    li.remove();
+    setCount(cur.n - 1);
+    if (!clist.children.length) clist.innerHTML = '<li class="empty">עדיין אין תגובות. תהיו הראשונים!</li>';
+  } catch { hint('המחיקה נכשלה — בדקו את החיבור'); }
+});
 cform.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = ctext.value.trim();
   if (!cur || !text) return;
-  const name = cname.value.trim();
-  store.set('vod_name', name);
   csend.disabled = true;
   try {
-    const j = await server('/comments', { id: cur.key, client: CLIENT, name, text });
-    if (!j.ok) { hint(j.message || 'התגובה לא נשלחה'); return; }
+    const j = await server('/comments', { session: auth.session, id: cur.key, text });
+    if (!j.ok) {
+      if (j.error === 'login required') { await auth.logout(); renderFoot(); }
+      hint(j.message || 'התגובה לא נשלחה'); return;
+    }
     clist.querySelector('.empty')?.remove();
     clist.prepend(commentLi(j.comment));
     clist.scrollTop = 0;
     ctext.value = '';
-    cur.n += 1; setTitle(cur.n);
-    commentCounts[cur.key] = cur.n;
-    if (cur.countEl) cur.countEl.textContent = fmtCount(cur.n);
+    setCount(cur.n + 1);
   } catch { hint('התגובה לא נשלחה — בדקו את החיבור'); }
   finally { csend.disabled = false; }
 });
+document.getElementById('logout').onclick = async () => { await auth.logout(); };
+auth.onChange(async () => {
+  renderFoot();
+  if (!cur) return;
+  await loadMine(); // אחרי התחברות/התנתקות — לעדכן אילו תגובות אפשר למחוק
+  clist.querySelectorAll('.c').forEach(li => {
+    const meta = li.querySelector('.cmeta'); const has = meta.querySelector('.cdel');
+    const can = myIds.has(Number(li.dataset.cid));
+    if (can && !has) meta.insertAdjacentHTML('beforeend', '<button class="cdel" type="button">מחיקה</button>');
+    if (!can && has) has.remove();
+  });
+  if (auth.user) ctext.focus();
+});
+auth.onError(msg => hint(msg));
+auth.refresh(); // בודק שה-session השמור עדיין בתוקף
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && sheet.classList.contains('open')) { closeComments(); return; }
