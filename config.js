@@ -7,5 +7,9 @@ window.VOD_CONFIG = {
   SHEET_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxzkum1yfHWulPcYhpApeP3ZlX3HKkUWMiMkJDB02LstZFBWeYYOw68MleNbNypGeG2Xl_ULhjdhCa/pub?gid=1239361687&single=true&output=csv',
   SERVER: 'https://metailim.pythonanywhere.com/vod',
   GOOGLE_CLIENT_ID: '426523025549-7c50rkn7cun4vmm2r802u0ij6egjehtg.apps.googleusercontent.com',
-  LOGO_URL: 'https://res.cloudinary.com/xgh73omp/image/upload/v1793736075/slg6azbpgk3nrngxwzh3.png'
+  LOGO_URL: 'https://res.cloudinary.com/xgh73omp/image/upload/v1793736075/slg6azbpgk3nrngxwzh3.png',
+  // תמונת פרופיל קבועה לכל מקור (אם ריק — משתמשים במה שהתוסף שמר בטבלה)
+  SOURCE_AVATARS: {
+    hagizra: ''
+  }
 };
