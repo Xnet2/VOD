@@ -8,6 +8,8 @@ window.VOD_CONFIG = {
   SERVER: 'https://metailim.pythonanywhere.com/vod',
   GOOGLE_CLIENT_ID: '426523025549-7c50rkn7cun4vmm2r802u0ij6egjehtg.apps.googleusercontent.com',
   LOGO_URL: 'https://res.cloudinary.com/xgh73omp/image/upload/v1793736075/slg6azbpgk3nrngxwzh3.png',
+  // ה-Worker ב-Cloudflare שמביא את קובצי הווידאו להורדה עם הלוגו בסוף (הקוד ב-worker/)
+  MEDIA_PROXY: 'https://vodos-media.i0527685490.workers.dev',
   // תמונת פרופיל קבועה לכל מקור (אם ריק — משתמשים במה שהתוסף שמר בטבלה)
   SOURCE_AVATARS: {
     hagizra: ''

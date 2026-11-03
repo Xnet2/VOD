@@ -440,14 +440,7 @@ function slide(v) {
     const data = { title: plain(v.text), text: plain(v.text), url: v.link || v.videoUrl };
     try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); hint('הקישור הועתק'); } } catch {}
   };
-  // אתרי המקור לא מרשים להוריד ישירות מאתר אחר, אז הסרטון נפתח בלשונית חדשה ושומרים אותו משם
-  el.querySelector('.dl').onclick = () => {
-    if (/\.m3u8(\?|$)/i.test(v.videoUrl)) { hint('את הסרטון הזה אי אפשר להוריד'); return; }
-    const a = document.createElement('a');
-    a.href = v.videoUrl; a.target = '_blank'; a.rel = 'noopener'; a.download = '';
-    document.body.appendChild(a); a.click(); a.remove();
-    hint('הסרטון נפתח בלשונית חדשה — שמרו אותו משם');
-  };
+  el.querySelector('.dl').onclick = (e) => downloadVideo(v, e.currentTarget);
   const title = el.querySelector('.title'), more = el.querySelector('.more');
   const toggleText = () => { const open = title.classList.toggle('open'); more.textContent = open ? 'הצג פחות' : 'קרא עוד'; if (!open) title.scrollTop = 0; };
   title.onclick = () => { if (!more.hidden) toggleText(); };
@@ -474,6 +467,151 @@ function slide(v) {
   });
   io.observe(el);
   return el;
+}
+
+// ---- הורדה עם סיום ממותג: הסרטון, ואחריו טשטוש מהיר והלוגו (כמו בהורדה מטיקטוק) ----
+// אתרי המקור לא מרשים לאתר אחר לקרוא את הקבצים, לכן הקובץ מגיע דרך ה-Worker (MEDIA_PROXY).
+// הדפדפן מנגן אותו בקנבס נסתר ומקליט מחדש, אז ההכנה לוקחת בערך כאורך הסרטון.
+const MEDIA = (params.get('media') || cfg.MEDIA_PROXY || '').trim().replace(/\/+$/, '');
+const PROXY_HOSTS = ['stream.hagizra.news', 'cdn.thechats.click'];
+const OUTRO_MS = 1700;
+let downloading = false;
+
+function openOriginal(v) {
+  const a = document.createElement('a');
+  a.href = v.videoUrl; a.target = '_blank'; a.rel = 'noopener'; a.download = '';
+  document.body.appendChild(a); a.click(); a.remove();
+  hint('הסרטון נפתח בלשונית חדשה — שמרו אותו משם');
+}
+function saveBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function loadImage(src) {
+  return new Promise((resolve) => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => { if (src !== 'logo.png') loadImage('logo.png').then(resolve); else resolve(null); };
+    img.src = src;
+  });
+}
+function pickRecorderType() {
+  const types = [['video/mp4;codecs=avc1.42E01F,mp4a.40.2', 'mp4'], ['video/mp4;codecs=avc1,mp4a.40.2', 'mp4'], ['video/mp4', 'mp4'],
+    ['video/webm;codecs=vp9,opus', 'webm'], ['video/webm;codecs=vp8,opus', 'webm'], ['video/webm', 'webm']];
+  return (window.MediaRecorder && types.find(([t]) => MediaRecorder.isTypeSupported(t))) || null;
+}
+async function fetchVideo(url, onProgress) {
+  const res = await fetch(MEDIA + '/?url=' + encodeURIComponent(url));
+  if (!res.ok || !res.body) throw new Error('fetch ' + res.status);
+  const total = Number(res.headers.get('Content-Length')) || 0;
+  const reader = res.body.getReader(); const chunks = []; let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    chunks.push(value); got += value.length;
+    if (total) onProgress(got / total);
+  }
+  return new Blob(chunks, { type: res.headers.get('Content-Type') || 'video/mp4' });
+}
+async function recordWithOutro(blob, actx, onProgress) {
+  const type = pickRecorderType();
+  if (!type) throw new Error('no MediaRecorder');
+  const src = URL.createObjectURL(blob);
+  const video = document.createElement('video');
+  video.playsInline = true; video.preload = 'auto'; video.src = src;
+  try {
+    await new Promise((res, rej) => { video.onloadeddata = res; video.onerror = () => rej(new Error('decode')); });
+    const logo = await loadImage(LOGO);
+    const scale = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight));
+    const w = Math.round(video.videoWidth * scale / 2) * 2, h = Math.round(video.videoHeight * scale / 2) * 2;
+    const canvas = Object.assign(document.createElement('canvas'), { width: w, height: h });
+    const ctx = canvas.getContext('2d');
+    const still = Object.assign(document.createElement('canvas'), { width: w, height: h });
+    const small = document.createElement('canvas'), sctx = small.getContext('2d');
+    const canFilter = 'filter' in ctx && (ctx.filter = 'blur(1px)', ctx.filter === 'blur(1px)');
+    ctx.filter = 'none';
+
+    const stream = canvas.captureStream(30);
+    // הקול של הסרטון נכנס להקלטה בלבד (לא לרמקולים)
+    if (actx) {
+      const dest = actx.createMediaStreamDestination();
+      actx.createMediaElementSource(video).connect(dest);
+      dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+    } else video.muted = true; // בלי AudioContext — הקובץ יהיה בלי קול, אבל לפחות לא יתנגן ברמקולים
+    const rec = new MediaRecorder(stream, { mimeType: type[0], videoBitsPerSecond: 5e6 });
+    const parts = [];
+    rec.ondataavailable = (e) => { if (e.data.size) parts.push(e.data); };
+    const stopped = new Promise(r => { rec.onstop = r; });
+
+    let outroAt = 0;
+    const frame = () => {
+      if (!outroAt) {
+        ctx.drawImage(video, 0, 0, w, h);
+        if (video.duration) onProgress(Math.min(.96, video.currentTime / video.duration * .96));
+        if (video.ended) { still.getContext('2d').drawImage(canvas, 0, 0); outroAt = performance.now(); }
+      } else {
+        const t = performance.now() - outroAt;
+        const blur = Math.min(1, t / 280);                         // טשטוש חזק בתוך פחות משליש שנייה
+        if (canFilter) {
+          // טשטוש אמיתי; מגדילים מעט כדי שהשוליים המטושטשים לא ייראו כמסגרת
+          const r = blur * Math.max(w, h) * .028, pad = r * 2.5;
+          ctx.filter = `blur(${r.toFixed(1)}px)`;
+          ctx.drawImage(still, -pad, -pad, w + pad * 2, h + pad * 2);
+          ctx.filter = 'none';
+        } else {
+          const f = 1 + blur * 26;
+          small.width = Math.max(2, Math.round(w / f)); small.height = Math.max(2, Math.round(h / f));
+          sctx.drawImage(still, 0, 0, small.width, small.height);
+          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(small, 0, 0, w, h);
+        }
+        ctx.fillStyle = `rgba(0,0,0,${.3 * blur})`; ctx.fillRect(0, 0, w, h);
+        if (logo) {
+          const p = Math.min(1, Math.max(0, (t - 120) / 480)), ease = 1 - Math.pow(1 - p, 3);
+          const lw = Math.min(w * .62, 560) * (.84 + .16 * ease), lh = lw * logo.naturalHeight / logo.naturalWidth;
+          ctx.globalAlpha = ease; ctx.drawImage(logo, (w - lw) / 2, (h - lh) / 2, lw, lh); ctx.globalAlpha = 1;
+        }
+        onProgress(.96 + .04 * Math.min(1, t / OUTRO_MS));
+        if (t >= OUTRO_MS) { rec.stop(); return; }
+      }
+      setTimeout(frame, 1000 / 30);
+    };
+    rec.start(1000);
+    await video.play();
+    frame();
+    await stopped;
+    return { blob: new Blob(parts, { type: type[0].split(';')[0] }), ext: type[1] };
+  } finally {
+    video.pause(); URL.revokeObjectURL(src);
+  }
+}
+async function downloadVideo(v, btn) {
+  if (downloading) { hint('הורדה אחרת עדיין בהכנה'); return; }
+  let host = ''; try { host = new URL(v.videoUrl).hostname; } catch {}
+  if (/\.m3u8(\?|$)/i.test(v.videoUrl)) { hint('את הסרטון הזה אי אפשר להוריד'); return; }
+  if (!MEDIA || !PROXY_HOSTS.includes(host) || !pickRecorderType()) { openOriginal(v); return; }
+  // AudioContext נוצר כבר בלחיצה עצמה, כדי שהדפדפן ירשה לו לפעול
+  let actx = null;
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch {}
+  const label = btn.querySelector('span');
+  const setPct = (p) => { label.textContent = Math.round(p * 100) + '%'; };
+  downloading = true; btn.disabled = true; setPct(0);
+  hint('מכין את הסרטון להורדה — השאירו את הדף פתוח');
+  try {
+    const blob = await fetchVideo(v.videoUrl, p => setPct(p * .25));
+    const out = await recordWithOutro(blob, actx, p => setPct(.25 + p * .75));
+    const name = 'VODOS-' + (plain(v.text).slice(0, 40).replace(/[\\/:*?"<>|]+/g, '').trim() || 'video') + '.' + out.ext;
+    saveBlob(out.blob, name);
+    hint('הסרטון ירד');
+  } catch (err) {
+    console.warn('download with outro failed, opening original', err);
+    openOriginal(v);
+  } finally {
+    downloading = false; btn.disabled = false; label.textContent = 'הורדה';
+    if (actx) actx.close().catch(() => {});
+  }
 }
 
 function setMuted(m) { // רק מהמקלדת (M) — אין כפתור השתקה

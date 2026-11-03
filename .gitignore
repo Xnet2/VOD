@@ -1,1 +1,3 @@
 .clasp.json
+worker/.wrangler/
+worker/node_modules/
