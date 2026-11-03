@@ -66,6 +66,28 @@ a{color:inherit}
 .hint{position:absolute;z-index:22;left:50%;bottom:28%;transform:translateX(-50%);padding:10px 16px;border-radius:999px;background:rgba(0,0,0,.6);font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .hint.show{opacity:1}
 
+/* חלונית התגובות — נפתחת מלמטה כמו בטיקטוק */
+.sheet{position:absolute;inset:0;z-index:30;visibility:hidden;pointer-events:none}
+.sheet.open{visibility:visible;pointer-events:auto}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .25s}
+.sheet.open .sheet-bg{opacity:1}
+.sheet-box{position:absolute;inset:auto 0 0 0;height:64%;display:flex;flex-direction:column;background:#fff;color:#161823;border-radius:14px 14px 0 0;transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.sheet.open .sheet-box{transform:none}
+.sheet-head{position:relative;padding:14px 16px 10px;text-align:center;font-size:14px}
+.sheet-x{position:absolute;inset-inline-end:10px;top:8px;width:32px;height:32px;font-size:16px;color:#161823}
+.clist{flex:1;overflow-y:auto;list-style:none;padding:4px 16px 8px;overscroll-behavior:contain}
+.clist li{padding:9px 0;line-height:1.45;font-size:15px;word-wrap:break-word}
+.clist .cn{display:block;font-size:13px;font-weight:500;color:#8a8b91}
+.clist .ct{display:block;font-size:12px;color:#a6a7ab;margin-top:2px}
+.clist .empty{color:#8a8b91;text-align:center;padding:40px 0;font-size:14px}
+.cform{border-top:1px solid #ececec;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);background:#fff}
+.cname-row{display:flex;align-items:center;gap:6px;font-size:12px;color:#8a8b91;margin-bottom:6px}
+.cname-row input{border:0;border-bottom:1px solid #ddd;font:inherit;font-size:13px;color:#161823;width:9em;padding:2px 0;outline:none;background:none}
+.crow{display:flex;gap:8px}
+.crow input{flex:1;min-width:0;border:0;border-radius:999px;background:#f1f1f2;padding:10px 14px;font:inherit;font-size:15px;color:#161823;outline:none}
+.crow button{color:var(--accent);font-weight:700;padding:0 6px}
+.crow button:disabled{opacity:.4}
+
 .state{height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);line-height:1.7}
 .state h2{color:var(--fg);font-size:20px;margin-bottom:6px}
 .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
@@ -82,6 +104,17 @@ a{color:inherit}
 <button class="sound" id="sound" aria-label="הפעל קול"></button>
 <main class="feed" id="feed"><div class="state"><div><div class="spinner"></div>טוען סרטונים…</div></div></main>
 <div class="hint" id="hint"></div>
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheet-bg" data-close></div>
+  <section class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <header class="sheet-head"><b id="sheetTitle">תגובות</b><button class="sheet-x" data-close aria-label="סגור">✕</button></header>
+    <ul class="clist" id="clist"></ul>
+    <form class="cform" id="cform" autocomplete="off">
+      <label class="cname-row">מגיב/ה בשם <input id="cname" maxlength="30" placeholder="אורח"></label>
+      <div class="crow"><input id="ctext" maxlength="500" placeholder="הוסף תגובה…" required><button type="submit" id="csend">שלח</button></div>
+    </form>
+  </section>
+</div>
 </div>
 
 <script src="config.js"></script>
@@ -92,7 +125,7 @@ const params = new URLSearchParams(location.search);
 const cfg = window.VOD_CONFIG || {};
 const API = (params.get('api') || cfg.API_URL || '').trim();
 const CSV = (params.get('csv') || cfg.SHEET_CSV || '').trim(); // קישור "Publish to web" של הטבלה (CSV)
-const LIKES = (params.get('likes') || cfg.LIKES_API || '').trim(); // כתובת /exec לשמירת לייקים משותפים
+const SERVER = (params.get('server') || cfg.SERVER || '').trim().replace(/\/+$/, ''); // שרת הלייקים והתגובות (PythonAnywhere)
 const PAGE = 15;
 const feed = document.getElementById('feed');
 const soundBtn = document.getElementById('sound');
@@ -105,6 +138,7 @@ const ICON = {
   play: '<svg class="paused-ico" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>',
   muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM22 9l-6 6M16 9l6 6"/></svg>',
   on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
+  comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5c-5.2 0-9.5 3.6-9.5 8.1 0 2.4 1.2 4.6 3.2 6.1l-.7 3.3 3.8-1.9c1 .3 2.1.5 3.2.5 5.2 0 9.5-3.6 9.5-8S17.2 3.5 12 3.5z"/></svg>',
   burst: '<svg class="heart-burst" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3.1 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.6 0 5.8 3.7 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>'
 };
 
@@ -118,8 +152,21 @@ let source = '';
 let offset = 0, mode = 'latest', loading = false, done = false;
 let seen = new Set();
 let hintTimer;
-let likesLive = !!LIKES;      // מכובה אוטומטית אם שרת הלייקים לא זמין
-const likeCounts = {};        // מטמון ספירת לייקים לפי מזהה
+let serverLive = !!SERVER;    // מכובה אוטומטית אם השרת לא זמין — ואז הלייקים מקומיים בלבד
+const likeCounts = {};        // מטמון ספירות לפי מזהה סרטון
+const commentCounts = {};
+// מזהה אנונימי קבוע לכל דפדפן — כך כל משתמש נספר פעם אחת ורואה את הלייקים שלו
+const CLIENT = (() => {
+  let id = store.get('vod_client', '');
+  if (!id) { id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36); store.set('vod_client', id); }
+  return id;
+})();
+async function server(path, body) {
+  // text/plain כדי שהדפדפן לא ישלח בקשת preflight לפני כל POST
+  const opt = body ? { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(body) } : {};
+  const r = await fetch(SERVER + path, opt);
+  return r.json().catch(() => ({ ok: false }));
+}
 
 function likeKey(v) { return v.vodUid || v.videoUrl; }
 function fmtCount(n) {
@@ -139,19 +186,20 @@ function isMarketing(text) {
   for (const w of t.split(/\s+/)) { if (w.length >= 4) { wc[w] = (wc[w] || 0) + 1; if (wc[w] >= 3) return true; } }
   return false;
 }
-async function fetchLikeCounts(vids) {
-  if (!LIKES || !likesLive) return;
+async function fetchStats(vids) {
+  if (!serverLive) return;
   const ids = [...new Set(vids.map(likeKey).filter(k => k && !(k in likeCounts)))];
   if (!ids.length) return;
   try {
-    const u = new URL(LIKES, location.href);
-    u.searchParams.set('action', 'likes');
-    u.searchParams.set('ids', ids.join(','));
-    const r = await fetch(u);
-    const j = await r.json();
-    if (j && j.ok && j.likes) { Object.assign(likeCounts, j.likes); ids.forEach(k => { if (!(k in likeCounts)) likeCounts[k] = 0; }); }
-    else likesLive = false;
-  } catch { likesLive = false; }
+    const j = await server('/stats?ids=' + encodeURIComponent(ids.join(',')) + '&client=' + encodeURIComponent(CLIENT));
+    if (!j.ok) { serverLive = false; return; }
+    Object.assign(likeCounts, j.likes);
+    Object.assign(commentCounts, j.comments);
+    // השרת קובע מה המשתמש הזה כבר אהב
+    const mine = new Set(j.mine || []);
+    vids.forEach(v => { const k = likeKey(v); if (k in j.likes) mine.has(k) ? likes.add(v.videoUrl) : likes.delete(v.videoUrl); });
+    store.set('vod_likes', [...likes]);
+  } catch { serverLive = false; }
 }
 
 function hint(t) {
@@ -233,7 +281,7 @@ async function loadMore() {
       if (vids.length < PAGE) mode = 'random'; // נגמרו החדשים — ממשיכים בערבוב מהארכיון
     }
     vids = vids.filter(v => v.videoUrl && !seen.has(v.videoUrl));
-    await fetchLikeCounts(vids);
+    await fetchStats(vids);
     vids.forEach(v => { seen.add(v.videoUrl); feed.appendChild(slide(v)); });
     if (!feed.querySelector('.slide')) {
       feed.innerHTML = '<div class="state"><div><h2>אין עדיין סרטונים</h2>השאיבה האוטומטית תמלא את הפיד בקרוב.</div></div>';
@@ -282,7 +330,8 @@ function slide(v) {
     </div>
     <div class="side">
       <div class="avatar" data-initial="${esc(name.slice(0, 1))}">${v.avatar ? `<img src="${esc(v.avatar)}" alt="${esc(name)}" onerror="this.remove()">` : ''}</div>
-      <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span class="cnt">${likesLive ? fmtCount(likeCounts[likeKey(v)] || 0) : (liked ? 'אהבת' : 'אהבתי')}</span></button>
+      <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span class="cnt">${serverLive ? fmtCount(likeCounts[likeKey(v)] || 0) : (liked ? 'אהבת' : 'אהבתי')}</span></button>
+      ${serverLive ? `<button class="act cmt" aria-label="תגובות">${ICON.comment}<span class="ccnt">${fmtCount(commentCounts[likeKey(v)] || 0)}</span></button>` : ''}
       <button class="act share" aria-label="שתף">${ICON.share}<span>שתף</span></button>
     </div>
     <div class="bar"><i></i></div>`;
@@ -301,17 +350,19 @@ function slide(v) {
     on ? likes.add(v.videoUrl) : likes.delete(v.videoUrl);
     store.set('vod_likes', [...likes]);
     likeBtn.classList.toggle('liked', on);
-    if (likesLive) {
+    if (serverLive) {
       likeCounts[key] = Math.max(0, (likeCounts[key] || 0) + (on ? 1 : -1));
       cntEl.textContent = fmtCount(likeCounts[key]);
-      const u = new URL(LIKES, location.href);
-      u.searchParams.set('action', 'like'); u.searchParams.set('uid', key); u.searchParams.set('dir', on ? '1' : '-1');
-      fetch(u).then(r => r.json()).then(j => { if (j && j.ok && typeof j.count === 'number') { likeCounts[key] = j.count; cntEl.textContent = fmtCount(j.count); } }).catch(() => {});
+      server('/like', { id: key, client: CLIENT, on })
+        .then(j => { if (j.ok && typeof j.count === 'number') { likeCounts[key] = j.count; cntEl.textContent = fmtCount(j.count); } })
+        .catch(() => {});
     } else {
       cntEl.textContent = on ? 'אהבת' : 'אהבתי';
     }
   };
   likeBtn.onclick = () => toggleLike();
+  const cmtBtn = el.querySelector('.cmt');
+  if (cmtBtn) cmtBtn.onclick = () => openComments(key, cmtBtn.querySelector('.ccnt'));
   el.querySelector('.share').onclick = async () => {
     const data = { title: v.text, text: v.text, url: v.link || v.videoUrl };
     try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); hint('הקישור הועתק'); } } catch {}
@@ -403,7 +454,67 @@ function buildTabs() {
   });
 }
 
+// ---- תגובות ----
+const sheet = document.getElementById('sheet');
+const clist = document.getElementById('clist');
+const cform = document.getElementById('cform');
+const cname = document.getElementById('cname');
+const ctext = document.getElementById('ctext');
+const csend = document.getElementById('csend');
+const sheetTitle = document.getElementById('sheetTitle');
+let cur = null; // { key, countEl, n }
+cname.value = store.get('vod_name', '');
+
+function commentLi(c) {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="cn">${esc(c.name)}</span>${esc(c.text)}<span class="ct">${ago(new Date(c.ts * 1000).toISOString())}</span>`;
+  return li;
+}
+function setTitle(n) { sheetTitle.textContent = n === 1 ? 'תגובה אחת' : `${fmtCount(n)} תגובות`; }
+async function openComments(key, countEl) {
+  cur = { key, countEl, n: commentCounts[key] || 0 };
+  setTitle(cur.n);
+  clist.innerHTML = '<li class="empty">טוען…</li>';
+  sheet.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
+  try {
+    const j = await server('/comments?id=' + encodeURIComponent(key));
+    if (!cur || cur.key !== key) return;
+    clist.innerHTML = '';
+    if (!j.ok) { clist.innerHTML = '<li class="empty">לא הצלחנו לטעון תגובות</li>'; return; }
+    if (!j.comments.length) clist.innerHTML = '<li class="empty">עדיין אין תגובות. תהיו הראשונים!</li>';
+    j.comments.forEach(c => clist.appendChild(commentLi(c)));
+    cur.n = j.comments.length; setTitle(cur.n);
+  } catch { clist.innerHTML = '<li class="empty">לא הצלחנו לטעון תגובות</li>'; }
+}
+function closeComments() {
+  sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true');
+  ctext.blur(); cur = null;
+}
+sheet.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeComments(); });
+cform.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = ctext.value.trim();
+  if (!cur || !text) return;
+  const name = cname.value.trim();
+  store.set('vod_name', name);
+  csend.disabled = true;
+  try {
+    const j = await server('/comments', { id: cur.key, client: CLIENT, name, text });
+    if (!j.ok) { hint(j.message || 'התגובה לא נשלחה'); return; }
+    clist.querySelector('.empty')?.remove();
+    clist.prepend(commentLi(j.comment));
+    clist.scrollTop = 0;
+    ctext.value = '';
+    cur.n += 1; setTitle(cur.n);
+    commentCounts[cur.key] = cur.n;
+    if (cur.countEl) cur.countEl.textContent = fmtCount(cur.n);
+  } catch { hint('התגובה לא נשלחה — בדקו את החיבור'); }
+  finally { csend.disabled = false; }
+});
+
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && sheet.classList.contains('open')) { closeComments(); return; }
+  if (e.target.closest('input,textarea')) return; // בזמן הקלדה — לא לגלול ולא להשתיק
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
     e.preventDefault();
     feed.scrollBy({ top: (e.key === 'ArrowDown' ? 1 : -1) * feed.clientHeight, behavior: 'smooth' });
