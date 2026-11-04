@@ -10,7 +10,7 @@
 // המפתח של ה-Apps Script שמור כסוד: wrangler secret put APPS_SCRIPT_KEY
 
 const ALLOWED_HOSTS = new Set(['stream.hagizra.news', 'cdn.thechats.click']);
-const ALLOWED_ORIGINS = [/^https:\/\/xnet2\.github\.io$/, /^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
+const ALLOWED_ORIGINS = [/^https:\/\/xnet2\.github\.io$/, /^https:\/\/vodos\.i0527685490\.workers\.dev$/,/^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
 
 function cors(origin) {
   const ok = ALLOWED_ORIGINS.some(re => re.test(origin || ''));

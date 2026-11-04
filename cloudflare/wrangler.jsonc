@@ -1,0 +1,8 @@
+{
+  // VODOS על Cloudflare — אותו אתר כמו ב-GitHub Pages, בלי האייקון ובלי תגובות.
+  // לפני העלאה:  node build.mjs   (בונה את התיקייה site)
+  "name": "vodos",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": { "directory": "./site" }
+}

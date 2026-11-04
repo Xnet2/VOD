@@ -1,3 +1,5 @@
 .clasp.json
 worker/.wrangler/
 worker/node_modules/
+cloudflare/site/
+cloudflare/.wrangler/

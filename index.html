@@ -170,6 +170,7 @@ const auth = window.VodAuth;
 const server = auth.server;
 const PAGE = 15;
 const SOURCE_AVATARS = cfg.SOURCE_AVATARS || {}; // תמונת פרופיל קבועה לפי מקור (גוברת על מה שבטבלה)
+const COMMENTS = cfg.COMMENTS !== false;         // COMMENTS: false בקובץ ההגדרות = בלי כפתור תגובות
 const feed = document.getElementById('feed');
 const hintEl = document.getElementById('hint');
 
@@ -409,7 +410,7 @@ function slide(v) {
     <div class="side">
       <div class="avatar" data-initial="${esc(name.slice(0, 1))}">${avatar ? `<img src="${esc(avatar)}" alt="${esc(name)}" onerror="this.remove()">` : ''}</div>
       <button class="act like ${liked ? 'liked' : ''}" aria-label="אהבתי">${ICON.heart}<span class="cnt">${serverLive ? fmtCount(likeCounts[key] || 0) : (liked ? 'אהבת' : 'אהבתי')}</span></button>
-      ${serverLive ? `<button class="act cmt" aria-label="תגובות">${ICON.comment}<span class="ccnt">${fmtCount(commentCounts[key] || 0)}</span></button>` : ''}
+      ${serverLive && COMMENTS ? `<button class="act cmt" aria-label="תגובות">${ICON.comment}<span class="ccnt">${fmtCount(commentCounts[key] || 0)}</span></button>` : ''}
       <button class="act share" aria-label="שיתוף">${ICON.share}<span>שיתוף</span></button>
       <button class="act dl" aria-label="הורדה">${ICON.download}<span>הורדה</span></button>
     </div>
@@ -815,7 +816,7 @@ auth.onChange(async () => {
   if (auth.user) ctext.focus();
 });
 auth.onError(msg => hint(msg));
-auth.refresh(); // בודק שה-session השמור עדיין בתוקף
+if (COMMENTS) auth.refresh(); // בודק שה-session השמור עדיין בתוקף
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { if (!menu.hidden) { setMenu(false); return; } if (sheet.classList.contains('open')) { closeComments(); return; } }
