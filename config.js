@@ -13,6 +13,7 @@ window.VOD_CONFIG = {
   // תמונת פרופיל קבועה לכל מקור (אם ריק — משתמשים במה שהתוסף שמר בטבלה)
   SOURCE_AVATARS: {
     hagizra: '',
-    pargod: 'https://play-lh.googleusercontent.com/fSnPR2dasoQYNsodYKYZIbdS6FmaHCj2tej7yLtbD27EEJJd4K1BlEANFjg2ine8X2JdNtxnhkkACod8V62Q9g=w480-h960-rw'
+    pargod: 'https://play-lh.googleusercontent.com/fSnPR2dasoQYNsodYKYZIbdS6FmaHCj2tej7yLtbD27EEJJd4K1BlEANFjg2ine8X2JdNtxnhkkACod8V62Q9g=w480-h960-rw',
+    pargodmusic: 'https://media.hateder.net/image/2026/09/5b28a8a4f17b2117fcb9e487.png'
   }
 };
