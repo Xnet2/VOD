@@ -81,6 +81,23 @@ a{color:inherit}
 .hint{position:absolute;z-index:40;left:50%;bottom:30%;transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:rgba(22,24,35,.78);backdrop-filter:blur(8px);font-size:14.5px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 .hint.show{opacity:1}
 
+/* "סרטונים חדשים" — גלולה זכוכיתית בפינה השמאלית העליונה, עם מסגרת דקה טורקיז→ורוד ותמונות הערוצים (כמו ב-X) */
+.newpill{position:absolute;z-index:24;top:calc(env(safe-area-inset-top) + 11px);inset-inline-end:10px;display:flex;align-items:center;gap:7px;height:34px;padding-inline:9px 6px;border-radius:999px;
+  border:1.5px solid transparent;
+  background:linear-gradient(rgba(22,24,35,.74),rgba(22,24,35,.74)) padding-box,linear-gradient(115deg,#25f4ee,#fe2c55) border-box;
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  color:#fff;font-size:13.5px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.32);
+  opacity:0;transform:translateY(-16px) scale(.92);pointer-events:none;transition:opacity .25s ease,transform .45s cubic-bezier(.2,1.3,.3,1)}
+.newpill.show{opacity:1;transform:none;pointer-events:auto}
+.newpill:active{transform:scale(.95)}
+.newpill svg{width:16px;height:16px;flex:none;animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(1px)}50%{transform:translateY(-2px)}}
+.newpill .avs{display:flex;flex-direction:row}
+.newpill .av{width:24px;height:24px;border-radius:50%;border:2px solid #1b1c26;background:#fff;color:var(--ink);font-size:11px;font-weight:800;display:grid;place-items:center;overflow:hidden;flex:none}
+.newpill .av + .av{margin-inline-start:-9px}
+.newpill .av img{width:100%;height:100%;object-fit:cover}
+.newpill .lbl{white-space:nowrap}
+
 /* חלונית התגובות — נפתחת מלמטה כמו בטיקטוק */
 .sheet{position:absolute;inset:0;z-index:30;visibility:hidden;pointer-events:none}
 .sheet.open{visibility:visible;pointer-events:auto}
@@ -153,6 +170,10 @@ a{color:inherit}
 </nav>
 <main class="feed" id="feed"><div class="state"><div class="splash" role="status" aria-label="טוען סרטונים"><img src="logo.png" alt="VODOS"><div class="dots"><i></i><i></i></div></div></div></main>
 <div class="hint" id="hint"></div>
+<button class="newpill" id="newpill" type="button" aria-hidden="true" tabindex="-1">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+  <span class="avs" id="newAvs"></span><span class="lbl" id="newLbl"></span>
+</button>
 <div class="sheet" id="sheet" aria-hidden="true">
   <div class="sheet-bg" data-close></div>
   <section class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -302,30 +323,104 @@ function parseCSV(text) {
   return rows;
 }
 function fileKey(url) { try { const u = new URL(url); return u.host + u.pathname; } catch { return url; } }
-async function loadAll() {
-  if (ALL) return;
-  const r = await fetch(CSV);
-  if (!r.ok) throw new Error('הטבלה לא נגישה (' + r.status + ')');
-  const rows = parseCSV(await r.text()).filter(r => r.length > 1);
-  if (!rows.length) { ALL = []; return; }
-  const head = rows.shift().map(h => h.trim());
-  const col = (name) => head.indexOf(name);
+let HEAD = null;          // שמות העמודות בטבלה
+let sheetRows = 0;        // כמה שורות יש בטבלה (כולל הכותרת) — כדי לבקש רק את מה שנוסף אחריהן
+const knownFiles = new Set(), knownTexts = new Set(); // למניעת כפילויות, גם בסרטונים שמגיעים בהמשך
+function toVideos(rows) {
+  const col = (name) => HEAD.indexOf(name);
   const ix = { vodUid: col('vodUid'), videoUrl: col('videoUrl'), source: col('source'), sourceName: col('sourceName'), avatar: col('avatar'), text: col('text'), timestamp: col('timestamp'), link: col('link'), poster: col('poster') };
-  const list = rows.map(r => ({
+  const list = rows.filter(r => r.length > 1).map(r => ({
     vodUid: r[ix.vodUid] || '', videoUrl: r[ix.videoUrl] || '', source: r[ix.source] || '',
     sourceName: r[ix.sourceName] || '', avatar: r[ix.avatar] || '', text: r[ix.text] || '',
     timestamp: r[ix.timestamp] || '', link: r[ix.link] || '', poster: ix.poster >= 0 ? (r[ix.poster] || '') : ''
   })).filter(v => v.videoUrl && !isMarketing(v.text));
   list.sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
   // בלי כפילויות: אותו קובץ וידאו, או אותו טקסט בדיוק, מופיעים רק פעם אחת (נשאר החדש ביותר)
-  const files = new Set(), texts = new Set();
-  ALL = list.filter(v => {
+  return list.filter(v => {
     const f = fileKey(v.videoUrl), t = plain(v.text);
-    if (files.has(f) || (t.length >= 15 && texts.has(t))) return false;
-    files.add(f); if (t.length >= 15) texts.add(t);
+    if (knownFiles.has(f) || (t.length >= 15 && knownTexts.has(t))) return false;
+    knownFiles.add(f); if (t.length >= 15) knownTexts.add(t);
     return true;
   });
 }
+async function loadAll() {
+  if (ALL) return;
+  const r = await fetch(CSV);
+  if (!r.ok) throw new Error('הטבלה לא נגישה (' + r.status + ')');
+  const rows = parseCSV(await r.text());
+  if (rows.length < 2) { ALL = []; return; }
+  sheetRows = rows.length;
+  HEAD = rows.shift().map(h => h.trim());
+  ALL = toVideos(rows);
+}
+
+// ---- סרטונים חדשים בזמן גלילה ----
+// כל דקה מבקשים מגוגל רק את השורה האחרונה שכבר ידועה ואת מה שנוסף אחריה (כ-1KB, לא כל הטבלה).
+// חשוב שהטווח יכלול שורה קיימת: טווח שכולו אחרי סוף הטבלה מחזיר את כל הטבלה (2MB+).
+let pending = []; // סרטונים חדשים שעוד לא נכנסו לפיד, מהחדש לישן
+let polling = false;
+async function checkNew() {
+  if (!CSV || !ALL || !HEAD || polling || document.hidden) return;
+  polling = true;
+  try {
+    const r = await fetch(`${CSV}&range=A${sheetRows}:J${sheetRows + 300}`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const rows = parseCSV(await r.text());
+    let fresh;
+    if (rows.length && rows[0][0] === HEAD[0]) {          // חזרה כל הטבלה (למשל אם נמחקו שורות)
+      fresh = rows.slice(sheetRows);
+      sheetRows = rows.length;
+    } else {
+      fresh = rows.slice(1);                                // השורה הראשונה היא האחרונה שכבר ידועה
+      sheetRows += fresh.length;
+    }
+    const vids = toVideos(fresh);
+    if (!vids.length) return;
+    pending = vids.concat(pending).sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
+    renderNewPill();
+  } catch {} finally { polling = false; }
+}
+setInterval(checkNew, 60000);
+
+const newPill = document.getElementById('newpill');
+const visiblePending = () => pending.filter(v => !source || v.source === source);
+function renderNewPill() {
+  const vis = visiblePending();
+  const show = vis.length > 0;
+  newPill.classList.toggle('show', show);
+  newPill.setAttribute('aria-hidden', String(!show));
+  newPill.tabIndex = show ? 0 : -1;
+  if (!show) return;
+  // עד 3 ערוצים שונים, לפי הסדר שבו הסרטונים עלו
+  const chans = [];
+  for (const v of vis) { if (!chans.some(c => c.source === v.source)) chans.push(v); if (chans.length === 3) break; }
+  document.getElementById('newAvs').innerHTML = chans.map(v => {
+    const pic = SOURCE_AVATARS[v.source] || v.avatar, name = v.sourceName || v.source || '';
+    return `<span class="av">${pic ? `<img src="${esc(pic)}" alt="" onerror="this.replaceWith(document.createTextNode('${esc(name.slice(0, 1))}'))">` : esc(name.slice(0, 1))}</span>`;
+  }).join('');
+  document.getElementById('newLbl').textContent = vis.length === 1 ? 'חדש' : `${vis.length} חדשים`;
+  newPill.setAttribute('aria-label', (vis.length === 1 ? 'סרטון חדש' : `${vis.length} סרטונים חדשים`) + ' — לחצו כדי לראות');
+}
+// מכניס את כל הסרטונים החדשים לרשימה; מחזיר את אלה שמתאימים למקור שנבחר
+function mergePending() {
+  if (!pending.length) return [];
+  const vis = visiblePending();
+  ALL = pending.concat(ALL);
+  if (mode === 'latest') offset += vis.length; // הם נכנסו לראש הרשימה — הדפדוף ממשיך מאותו מקום
+  pending = [];
+  renderNewPill();
+  return vis;
+}
+newPill.addEventListener('click', async () => {
+  const vids = mergePending().filter(v => !seen.has(fileKey(v.videoUrl)));
+  feed.querySelector('.state')?.remove();
+  await fetchStats(vids);
+  const first = feed.firstElementChild;
+  vids.forEach(v => { seen.add(fileKey(v.videoUrl)); const el = slide(v); feed.insertBefore(el, first); checkMore(el); });
+  feed.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => { if (feed.scrollTop > 4) feed.scrollTop = 0; }, 700); // גיבוי אם הגלילה החלקה לא הושלמה
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkNew(); });
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 async function fetchBatch() {
@@ -695,6 +790,7 @@ menu.addEventListener('click', (e) => {
   const t = e.target.closest('.tab'); if (!t) return;
   setMenu(false);
   if (t.dataset.src === source) return;
+  mergePending(); // סרטונים חדשים שחיכו — נכנסים לרשימה לפני הטעינה מחדש
   menu.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-checked', x === t));
   source = t.dataset.src;
   srcLabel.textContent = source ? (SOURCE_NAMES[source] || source) : '';
