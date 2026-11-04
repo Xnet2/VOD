@@ -5,7 +5,7 @@
 // שימוש: GET https://vodos-media.<subdomain>.workers.dev/?url=<כתובת הסרטון>
 // מותר רק לקבצים מהאתרים שברשימה, ורק לאתר VODOS (ובדיקות מקומיות).
 //
-// בנוסף, כל 10 דקות (cron ב-wrangler.toml) הוא מביא סרטונים חדשים מכל המקורות שב-SOURCES
+// בנוסף, כל דקה (cron ב-wrangler.toml) הוא מביא סרטונים חדשים מכל המקורות שב-SOURCES
 // ושולח אותם לטבלה דרך ה-Apps Script הקיים — באותו פורמט שהתוסף "פלאש-פוש" שולח,
 // כך שזה עובד גם כשהמחשב כבוי, והטבלה מדלגת על מה שכבר קיים.
 // המפתח של ה-Apps Script שמור כסוד: wrangler secret put APPS_SCRIPT_KEY
@@ -66,7 +66,7 @@ export async function fetchHateder(source, before) {
   return { videos: (j.videos || []).filter(v => v && v.url), more: !!j.more };
 }
 
-async function hatederRows(source, pages = 2) {
+async function hatederRows(source, pages = 1) { // רץ כל דקה — עמוד אחד (8 האחרונים) מספיק
   let before = '', all = [];
   for (let i = 0; i < pages; i++) {
     const { videos, more } = await fetchHateder(source, before);
@@ -98,7 +98,8 @@ export function hagizraRows(messages) {
 }
 
 async function hagizra() {
-  const j = await getJson(HAGIZRA.origin + '/api/v2/messages?offset=0&limit=40&direction=desc');
+  // רץ כל דקה — 20 ההודעות האחרונות (כשעה וחצי) מספיקות, וחוסכות זמן עיבוד
+  const j = await getJson(HAGIZRA.origin + '/api/v2/messages?offset=0&limit=20&direction=desc');
   return hagizraRows(j.messages);
 }
 
