@@ -33,6 +33,11 @@ a{color:inherit}
 .srcbtn{display:flex;align-items:center;gap:1px;height:30px;padding:0 4px 0 2px;border-radius:999px;font-weight:700;font-size:14.5px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .srcbtn svg{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));transition:transform .2s}
 .srcbtn[aria-expanded=true] svg{transform:rotate(-90deg)}
+/* "עדכני" / "לא נצפו" — בצד השני של הראש */
+.feedtabs{margin-inline-start:auto;display:flex;gap:14px;pointer-events:auto}
+.feedtabs button{position:relative;padding:5px 0 7px;font-size:15.5px;font-weight:700;color:rgba(255,255,255,.62);text-shadow:0 1px 2px rgba(0,0,0,.35);transition:color .15s}
+.feedtabs button[aria-selected=true]{color:#fff}
+.feedtabs button[aria-selected=true]::after{content:"";position:absolute;bottom:0;left:50%;width:18px;height:2.5px;margin-left:-9px;border-radius:2px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .menu{position:absolute;top:calc(env(safe-area-inset-top) + 50px);inset-inline-start:12px;z-index:25;min-width:170px;padding:6px;background:#fff;color:var(--ink);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.22);display:flex;flex-direction:column;transform-origin:top right;animation:menuIn .16s ease-out}
 @keyframes menuIn{from{opacity:0;transform:scale(.94) translateY(-4px)}}
 .tab{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 12px;border-radius:10px;font-size:15.5px;font-weight:600;text-align:start;white-space:nowrap}
@@ -82,7 +87,7 @@ a{color:inherit}
 .hint.show{opacity:1}
 
 /* "סרטונים חדשים" — גלולה לבנה בפינה השמאלית העליונה: חץ ותמונות הערוצים שהעלו (כמו ב-X) */
-.newpill{position:absolute;z-index:24;top:calc(env(safe-area-inset-top) + 11px);inset-inline-end:10px;display:flex;align-items:center;gap:6px;height:34px;padding-inline:9px 5px;border-radius:999px;
+.newpill{position:absolute;z-index:24;top:calc(env(safe-area-inset-top) + 56px);inset-inline-end:10px;display:flex;align-items:center;gap:6px;height:34px;padding-inline:9px 5px;border-radius:999px;
   background:#fff;color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.18);
   opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity .2s ease,transform .3s ease}
 .newpill.show{opacity:1;transform:none;pointer-events:auto}
@@ -128,8 +133,9 @@ a{color:inherit}
 .mepop b{font-weight:700;font-size:15px}
 .mepop button{color:var(--accent);font-weight:700;text-align:start}
 
+.endslide{height:100%;scroll-snap-align:start;display:grid;place-items:center;text-align:center;padding:24px;background:#000;color:var(--muted);line-height:1.7;font-size:15px}
 .state{height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);line-height:1.7;font-size:15px}
-.state h2{color:var(--fg);font-size:20px;margin-bottom:6px}
+.state h2,.endslide h2{color:var(--fg);font-size:20px;margin-bottom:6px}
 /* טבעת טעינה לסרטון שמחכה לנתונים, בעיצוב האייקון: טבעת לבנה עם "צללים" בטורקיז ובוורוד שמסתובבים סביבה */
 .loader{position:relative;width:44px;height:44px;border-radius:50%;border:7px solid #fff;
   animation:spin 1s linear infinite;filter:drop-shadow(0 2px 10px rgba(0,0,0,.35))}
@@ -159,6 +165,10 @@ a{color:inherit}
     <img class="brand" id="brand" alt="VODOS">
     <button class="srcbtn" id="srcBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת מקור"><span id="srcLabel"></span><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
   </div>
+  <nav class="feedtabs" id="feedtabs" role="tablist" aria-label="סוג הפיד">
+    <button type="button" role="tab" data-feed="latest" aria-selected="true">עדכני</button>
+    <button type="button" role="tab" data-feed="unwatched" aria-selected="false">לא נצפו</button>
+  </nav>
 </header>
 <nav class="menu" id="menu" role="menu" hidden>
   <button class="tab" role="menuitemradio" data-src="" aria-checked="true">הכל</button>
@@ -228,7 +238,20 @@ let soundLocked = false;  // הדפדפן חסם ניגון עם קול עד ש�
 let lastUnlock = 0;
 let source = '';
 let offset = 0, mode = 'latest', loading = false, done = false;
-let seen = new Set();
+let seen = new Set();     // מה שכבר נמצא בפיד הנוכחי (שלא יופיע פעמיים)
+// "עדכני" — הכל מהחדש לישן (ואחר כך ערבוב מהארכיון); "לא נצפו" — רק מה שעוד לא נצפה בדפדפן הזה, מהחדש לישן
+let feedMode = store.get('vod_feed', 'latest') === 'unwatched' ? 'unwatched' : 'latest';
+// סרטונים שנצפו (לפחות 1.5 שניות על המסך) — נשמר בדפדפן, עד 5000 האחרונים
+const WATCHED_MAX = 5000;
+let watchedList = store.get('vod_watched', []);
+const watched = new Set(watchedList);
+function markWatched(url) {
+  const k = fileKey(url);
+  if (watched.has(k)) return;
+  watched.add(k); watchedList.push(k);
+  if (watchedList.length > WATCHED_MAX) watchedList.splice(0, watchedList.length - WATCHED_MAX).forEach(x => watched.delete(x));
+  store.set('vod_watched', watchedList);
+}
 let hintTimer;
 let serverLive = !!auth.SERVER; // מכובה אוטומטית אם השרת לא זמין — ואז הלייקים מקומיים בלבד
 const likeCounts = {};          // מטמון ספירות לפי מזהה סרטון
@@ -423,6 +446,11 @@ async function fetchBatch() {
   if (CSV) {
     await loadAll();
     let rows = source ? ALL.filter(v => v.source === source) : ALL;
+    if (feedMode === 'unwatched') {
+      const out = [];
+      for (const v of rows) { const k = fileKey(v.videoUrl); if (!watched.has(k) && !seen.has(k)) out.push(v); if (out.length === PAGE) break; }
+      return out;
+    }
     return (mode === 'latest' ? rows.slice(offset, offset + PAGE) : shuffle(rows).slice(0, PAGE));
   }
   const u = new URL(API);
@@ -442,7 +470,9 @@ async function loadMore() {
   try {
     let vids = await fetchBatch();
     if (CSV) buildTabs();
-    if (mode === 'latest') {
+    if (feedMode === 'unwatched') {
+      if (vids.length < PAGE) done = true; // אין יותר סרטונים שלא נצפו — לא ממשיכים לארכיון
+    } else if (mode === 'latest') {
       offset += vids.length;
       if (vids.length < PAGE) mode = 'random'; // נגמרו החדשים — ממשיכים בערבוב מהארכיון
     }
@@ -450,9 +480,14 @@ async function loadMore() {
     await fetchStats(vids);
     vids.forEach(v => { seen.add(fileKey(v.videoUrl)); const el = slide(v); feed.appendChild(el); checkMore(el); });
     if (!feed.querySelector('.slide')) {
-      feed.innerHTML = '<div class="state"><div><h2>אין עדיין סרטונים</h2>השאיבה האוטומטית תמלא את הפיד בקרוב.</div></div>';
+      feed.innerHTML = feedMode === 'unwatched'
+        ? '<div class="state"><div><h2>ראית הכל</h2>אין סרטונים שעוד לא צפית בהם. סרטונים חדשים יופיעו כאן כשיעלו.</div></div>'
+        : '<div class="state"><div><h2>אין עדיין סרטונים</h2>השאיבה האוטומטית תמלא את הפיד בקרוב.</div></div>';
       done = true;
     } else if (mode === 'random' && !vids.length) done = true;
+    else if (feedMode === 'unwatched' && done && !feed.querySelector('.endslide')) {
+      feed.insertAdjacentHTML('beforeend', '<div class="endslide"><div><h2>ראית הכל</h2>אין עוד סרטונים שלא צפית בהם. סרטונים חדשים יופיעו כשיעלו.</div></div>');
+    }
   } catch (e) {
     if (!feed.querySelector('.slide')) feed.innerHTML = `<div class="state"><div><h2>שגיאה בטעינה</h2>${esc(e.message)}</div></div>`;
   } finally {
@@ -743,6 +778,7 @@ function setMuted(m) { // רק מהמקלדת (M) — אין כפתור השתק
   hint(muted ? 'הקול כבוי' : 'הקול פועל');
 }
 
+let watchTimer;
 const io = new IntersectionObserver((entries) => {
   entries.forEach(({ target: el, isIntersecting, intersectionRatio }) => {
     const video = el.querySelector('video');
@@ -753,6 +789,9 @@ const io = new IntersectionObserver((entries) => {
       el.classList.toggle('loading', video.readyState < 3); // עוד לא מוכן לנגן — מציגים את הטבעת
       checkMore(el);
       playVideo(video);
+      // נחשב "נצפה" אחרי 1.5 שניות על המסך
+      clearTimeout(watchTimer);
+      watchTimer = setTimeout(() => { if (activeVideo === video && video.dataset.src) markWatched(video.dataset.src); }, 1500);
       // טעינה מוקדמת של הבא בתור
       const next = el.nextElementSibling?.querySelector('video');
       if (next) { attachSrc(next); next.preload = 'auto'; }
@@ -790,11 +829,26 @@ menu.addEventListener('click', (e) => {
   menu.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-checked', x === t));
   source = t.dataset.src;
   srcLabel.textContent = source ? (SOURCE_NAMES[source] || source) : '';
+  reloadFeed();
+});
+// טוען את הפיד מחדש מההתחלה (אחרי החלפת מקור או החלפה בין "עדכני" ל"לא נצפו")
+function reloadFeed() {
   offset = 0; mode = 'latest'; done = false; seen = new Set();
+  activeVideo = null; clearTimeout(watchTimer);
   feed.querySelectorAll('video').forEach(detachSrc);
   feed.innerHTML = '<div class="state"><div class="splash" role="status" aria-label="טוען סרטונים"><div class="dots"><i></i><i></i></div></div></div>';
   feed.scrollTop = 0;
   loadMore();
+}
+const feedTabs = document.getElementById('feedtabs');
+function showFeedTab() { feedTabs.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.feed === feedMode)); }
+showFeedTab();
+feedTabs.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b || b.dataset.feed === feedMode) return;
+  mergePending();
+  feedMode = b.dataset.feed; store.set('vod_feed', feedMode);
+  showFeedTab();
+  reloadFeed();
 });
 // בונה את רשימת המקורות לפי מה שבאמת קיים בטבלה (סדר לפי כמות)
 function buildTabs() {
