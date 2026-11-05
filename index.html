@@ -29,12 +29,12 @@ a{color:inherit}
 /* ראש הדף: הלוגו בפינה, ולידו כפתור קטן שפותח את תפריט המקורות */
 .top{position:absolute;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;padding:calc(env(safe-area-inset-top) + 12px) 12px 16px;background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,0));pointer-events:none}
 .brandbar{display:flex;align-items:center;gap:2px;pointer-events:auto}
-.brand{height:24px;width:auto;max-width:118px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+.srcbtn span{max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .srcbtn{display:flex;align-items:center;gap:1px;height:30px;padding:0 4px 0 2px;border-radius:999px;font-weight:700;font-size:14.5px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .srcbtn svg{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));transition:transform .2s}
 .srcbtn[aria-expanded=true] svg{transform:rotate(-90deg)}
-/* "עדכני" / "לא נצפו" — בצד השני של הראש */
-.feedtabs{margin-inline-start:auto;display:flex;gap:14px;pointer-events:auto}
+/* "עדכני" / "לא נצפו" — במרכז הראש */
+.feedtabs{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:14px;pointer-events:auto}
 .feedtabs button{position:relative;padding:5px 0 7px;font-size:15.5px;font-weight:700;color:rgba(255,255,255,.62);text-shadow:0 1px 2px rgba(0,0,0,.35);transition:color .15s}
 .feedtabs button[aria-selected=true]{color:#fff}
 .feedtabs button[aria-selected=true]::after{content:"";position:absolute;bottom:0;left:50%;width:18px;height:2.5px;margin-left:-9px;border-radius:2px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
@@ -76,6 +76,11 @@ a{color:inherit}
 .act.pop svg{animation:pop .35s}
 @keyframes pop{50%{transform:scale(1.3)}}
 
+/* סוף סרטון: טשטוש מהיר והלוגו באמצע (כמו בהורדה), ואז הסרטון מתחיל מחדש */
+.slide video{transition:filter .28s ease-out,transform .28s ease-out}
+.slide.outro video{filter:blur(22px) brightness(.7);transform:scale(1.08)}
+.outrologo{position:absolute;z-index:2;width:62%;max-width:300px;pointer-events:none;opacity:0;transform:scale(.84);transition:opacity .15s,transform .15s}
+.slide.outro .outrologo{opacity:1;transform:none;transition:opacity .48s cubic-bezier(.33,1,.68,1) .12s,transform .48s cubic-bezier(.33,1,.68,1) .12s}
 .paused-ico{position:absolute;z-index:3;width:64px;height:64px;opacity:0;transition:opacity .2s;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
 .slide.paused .paused-ico{opacity:.7}
 .heart-burst{position:absolute;z-index:4;width:100px;height:100px;color:var(--accent);pointer-events:none;animation:burst .8s forwards}
@@ -162,8 +167,7 @@ a{color:inherit}
 <div class="phone">
 <header class="top">
   <div class="brandbar">
-    <img class="brand" id="brand" alt="VODOS">
-    <button class="srcbtn" id="srcBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת מקור"><span id="srcLabel"></span><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+    <button class="srcbtn" id="srcBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת מקור"><span id="srcLabel">הכל</span><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
   </div>
   <nav class="feedtabs" id="feedtabs" role="tablist" aria-label="סוג הפיד">
     <button type="button" role="tab" data-feed="latest" aria-selected="true">עדכני</button>
@@ -263,8 +267,6 @@ const CLIENT = (() => {
   return id;
 })();
 
-document.getElementById('brand').src = LOGO;
-document.getElementById('brand').onerror = function () { this.onerror = null; this.src = 'logo.png'; };
 
 function likeKey(v) { return v.vodUid || v.videoUrl; }
 function fmtCount(n) {
@@ -543,7 +545,8 @@ function slide(v) {
   const avatar = SOURCE_AVATARS[v.source] || v.avatar;
   el.innerHTML = `
     ${v.poster ? `<div class="bgblur" style="background-image:url('${esc(v.poster)}')"></div>` : ''}
-    <video playsinline loop preload="none" ${v.poster ? `poster="${esc(v.poster)}"` : ''} data-src="${esc(v.videoUrl)}"></video>
+    <video playsinline preload="none" ${v.poster ? `poster="${esc(v.poster)}"` : ''} data-src="${esc(v.videoUrl)}"></video>
+    <img class="outrologo" src="${esc(LOGO)}" alt="" onerror="this.onerror=null;this.src='logo.png'">
     <div class="loader" aria-hidden="true"></div>
     ${ICON.play}
     <div class="shade"></div>
@@ -570,6 +573,12 @@ function slide(v) {
   video.addEventListener('stalled', loadingOn);
   ['playing', 'canplay', 'pause', 'error', 'emptied'].forEach(ev => video.addEventListener(ev, loadingOff));
   video.addEventListener('error', () => { if (el.isConnected && !video._hls) { const n = el.nextElementSibling; el.remove(); n && n.scrollIntoView(); } });
+  // בסוף הסרטון: טשטוש והלוגו, ואחרי OUTRO_MS מתחיל מההתחלה (אם עדיין על המסך)
+  video.addEventListener('ended', () => {
+    el.classList.add('outro');
+    setTimeout(() => { if (el.classList.contains('outro') && activeVideo === video && video.ended) playVideo(video); }, OUTRO_MS);
+  });
+  video.addEventListener('play', () => el.classList.remove('outro'));
 
   const likeBtn = el.querySelector('.like');
   const cntEl = likeBtn.querySelector('.cnt');
@@ -828,7 +837,7 @@ menu.addEventListener('click', (e) => {
   mergePending(); // סרטונים חדשים שחיכו — נכנסים לרשימה לפני הטעינה מחדש
   menu.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-checked', x === t));
   source = t.dataset.src;
-  srcLabel.textContent = source ? (SOURCE_NAMES[source] || source) : '';
+  srcLabel.textContent = source ? (SOURCE_NAMES[source] || source) : 'הכל';
   reloadFeed();
 });
 // טוען את הפיד מחדש מההתחלה (אחרי החלפת מקור או החלפה בין "עדכני" ל"לא נצפו")
