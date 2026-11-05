@@ -106,26 +106,42 @@ async function hagizra() {
 // ---- החתול השחור (black-cat.thechats.click) — אותו פירוק כמו בתוסף ----
 const BLACKCAT = { origin: 'https://black-cat.thechats.click', avatar: 'https://black-cat.thechats.click/api/files/a282306b024604fd12d73f64c809310319ee0bcc' };
 
-export function blackcatRows(list) {
+// ערוצים שבנויים על מערכת TheChannel (החתול השחור, מיוזיק אונליין): אותו API ואותו פורמט הודעות
+export function channelRows(list, ch) {
   const rows = [];
   for (const msg of Array.isArray(list) ? list : []) {
-    if (!msg || msg.deleted) continue;
+    if (!msg || msg.deleted || msg.isAds) continue;
     let body = String(msg.text || '');
     const videos = [];
     body = body.replace(/\[image-embedded#\]\(([^)]+)\)/g, () => '');
     body = body.replace(/\[video-embedded#\]\(([^)]+)\)/g, (m, url) => { videos.push(url); return ''; });
     body = body.replace(/\[audio-embedded#\]\(([^)]+)\)/g, '');
+    if (ch.plainLinks) body = body.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '$1'); // [טקסט](קישור) → טקסט
+    if (ch.cutFooter) body = body.split(/\n\s*-{3,}\s*(\n|$)/)[0].replace(/\n{3,}/g, '\n\n'); // חתימה קבועה אחרי קו "---"
     if (msg.file && msg.file.url && /^(mp4|mov|webm|m4v)$/i.test(msg.file.filetype || '')) videos.push(msg.file.url);
     videos.forEach((url, i) => rows.push({
-      vodUid: `blackcat:${msg.id}::${i}`, videoUrl: url, source: 'blackcat', sourceName: 'החתול השחור',
-      avatar: BLACKCAT.avatar, text: body.trim(), timestamp: msg.timestamp, link: BLACKCAT.origin,
+      vodUid: `${ch.source}:${msg.id}::${i}`, videoUrl: url, source: ch.source, sourceName: ch.name,
+      avatar: ch.avatar, text: body.trim(), timestamp: msg.timestamp, link: ch.origin,
     }));
   }
   return rows;
 }
 
+const BLACKCAT_CH = { source: 'blackcat', name: 'החתול השחור', ...BLACKCAT };
+export const blackcatRows = (list) => channelRows(list, BLACKCAT_CH);
+
 async function blackcat() {
   return blackcatRows(await getJson(BLACKCAT.origin + '/api/messages'));
+}
+
+// ---- מיוזיק אונליין (n.musiconline.co.il) ----
+export const MUSICONLINE = {
+  source: 'musiconline', name: 'מיוזיק אונליין', origin: 'https://n.musiconline.co.il', plainLinks: true, cutFooter: true,
+  avatar: 'https://xnet2.github.io/VOD/avatars/musiconline.png', // עותק קטן; הלוגו המקורי שוקל 4MB
+};
+export async function fetchMusiconline(limit = 20) {
+  const j = await getJson(MUSICONLINE.origin + '/api/messages?limit=' + limit);
+  return channelRows(j.messages, MUSICONLINE);
 }
 
 // כל המקורות שה-cron מושך. מקור שנכשל לא עוצר את האחרים.
@@ -134,6 +150,7 @@ export const SOURCES = {
   blackcat,
   pargod: () => hatederRows('pargod'),
   pargodmusic: () => hatederRows('pargodmusic'),
+  musiconline: () => fetchMusiconline(),
 };
 
 export async function pushToSheet(env, videos) {
