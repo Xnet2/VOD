@@ -265,9 +265,11 @@ function md(text) {
 }
 function plain(text) { return String(text || '').replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim(); }
 // מסנן תוכן שיווקי: יותר מ-2 אימוג'ים, או טקסט שחוזר על עצמו
-function isMarketing(text) {
+// מקורות שמסמנים פרסומות בעצמם (EMOJI_RULE_EXEMPT בהגדרות) — פטורים מכלל האימוג'ים, כי אצלם אימוג'ים הם חלק מהתוכן
+const EMOJI_EXEMPT = new Set(cfg.EMOJI_RULE_EXEMPT || []);
+function isMarketing(text, source) {
   const t = (text || '').trim(); if (!t) return false;
-  if (((t.match(/\p{Extended_Pictographic}/gu)) || []).length > 2) return true;
+  if (!EMOJI_EXEMPT.has(source) && ((t.match(/\p{Extended_Pictographic}/gu)) || []).length > 2) return true;
   const lines = t.split(/\n+/).map(s => s.replace(/\s+/g, ' ').trim()).filter(s => s.length >= 5);
   const seenLines = new Set();
   for (const l of lines) { if (seenLines.has(l)) return true; seenLines.add(l); }
@@ -333,7 +335,7 @@ function toVideos(rows) {
     vodUid: r[ix.vodUid] || '', videoUrl: r[ix.videoUrl] || '', source: r[ix.source] || '',
     sourceName: r[ix.sourceName] || '', avatar: r[ix.avatar] || '', text: r[ix.text] || '',
     timestamp: r[ix.timestamp] || '', link: r[ix.link] || '', poster: ix.poster >= 0 ? (r[ix.poster] || '') : ''
-  })).filter(v => v.videoUrl && !isMarketing(v.text));
+  })).filter(v => v.videoUrl && !isMarketing(v.text, v.source));
   list.sort((a, b) => (Date.parse(b.timestamp) || 0) - (Date.parse(a.timestamp) || 0));
   // בלי כפילויות: אותו קובץ וידאו, או אותו טקסט בדיוק, מופיעים רק פעם אחת (נשאר החדש ביותר)
   return list.filter(v => {

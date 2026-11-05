@@ -10,6 +10,8 @@ window.VOD_CONFIG = {
   LOGO_URL: 'https://res.cloudinary.com/xgh73omp/image/upload/v1793736075/slg6azbpgk3nrngxwzh3.png',
   // ה-Worker ב-Cloudflare שמביא את קובצי הווידאו להורדה עם הלוגו בסוף (הקוד ב-worker/)
   MEDIA_PROXY: 'https://vodos-media.i0527685490.workers.dev',
+  // מקורות שפטורים מכלל "יותר מ-2 אימוג'ים = פרסומת" (הם מסמנים פרסומות בעצמם). כלל הטקסט החוזר עדיין חל עליהם.
+  EMOJI_RULE_EXEMPT: ['musiconline'],
   // תמונת פרופיל קבועה לכל מקור (אם ריק — משתמשים במה שהתוסף שמר בטבלה)
   SOURCE_AVATARS: {
     hagizra: '',
