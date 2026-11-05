@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#000;--fg:#fff;--muted:rgba(255,255,255,.75);--accent:#fe2c55;--ink:#161823;--ink-2:#8a8b91;--line:#efeff1}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -29,12 +29,7 @@ a{color:inherit}
 /* ראש הדף: הלוגו בפינה, ולידו כפתור קטן שפותח את תפריט המקורות */
 .top{position:absolute;inset:0 0 auto 0;z-index:20;display:flex;align-items:center;padding:calc(env(safe-area-inset-top) + 12px) 12px 16px;background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,0));pointer-events:none}
 .brandbar{display:flex;align-items:center;gap:2px;pointer-events:auto}
-/* הלוגו כטקסט, כדי שהאותיות יעשו גל אחת אחרי השנייה */
-.brand{display:flex;direction:ltr;font-family:'Bebas Neue',Assistant,sans-serif;font-size:31px;line-height:1;letter-spacing:1.5px;color:#fff;padding:3px 4px 0 2px}
-.brand span{display:inline-block;text-shadow:-1.5px -1px 0 #25f4ee,1.5px 1px 0 #fe2c55,0 1px 3px rgba(0,0,0,.35);animation:brandwave 2.4s ease-in-out infinite}
-.brand span:nth-child(2){animation-delay:.12s}.brand span:nth-child(3){animation-delay:.24s}.brand span:nth-child(4){animation-delay:.36s}.brand span:nth-child(5){animation-delay:.48s}
-@keyframes brandwave{0%,60%,100%{transform:none}20%{transform:translateY(-4px)}40%{transform:translateY(1px)}}
-@media (prefers-reduced-motion:reduce){.brand span{animation:none}}
+.brand{height:24px;width:auto;max-width:118px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
 .srcbtn{display:flex;align-items:center;gap:1px;height:30px;padding:0 4px 0 2px;border-radius:999px;font-weight:700;font-size:14.5px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .srcbtn svg{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));transition:transform .2s}
 .srcbtn[aria-expanded=true] svg{transform:rotate(-90deg)}
@@ -161,7 +156,7 @@ a{color:inherit}
 <div class="phone">
 <header class="top">
   <div class="brandbar">
-    <div class="brand" id="brand" role="img" aria-label="VODOS"><span>V</span><span>O</span><span>D</span><span>O</span><span>S</span></div>
+    <img class="brand" id="brand" alt="VODOS">
     <button class="srcbtn" id="srcBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת מקור"><span id="srcLabel"></span><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></button>
   </div>
 </header>
@@ -245,6 +240,8 @@ const CLIENT = (() => {
   return id;
 })();
 
+document.getElementById('brand').src = LOGO;
+document.getElementById('brand').onerror = function () { this.onerror = null; this.src = 'logo.png'; };
 
 function likeKey(v) { return v.vodUid || v.videoUrl; }
 function fmtCount(n) {
